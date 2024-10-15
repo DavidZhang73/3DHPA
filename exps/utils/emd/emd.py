@@ -1,5 +1,5 @@
-import torch
 import emd_cuda
+import torch
 
 
 class EarthMoverDistanceFunction(torch.autograd.Function):
@@ -45,4 +45,3 @@ def earth_mover_distance(xyz1, xyz2, transpose=True):
         xyz2 = xyz2.transpose(1, 2)
     cost = EarthMoverDistanceFunction.apply(xyz1, xyz2)
     return cost
-

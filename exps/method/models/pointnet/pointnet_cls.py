@@ -1,7 +1,12 @@
 import torch.nn as nn
-import torch.utils.data
 import torch.nn.functional as F
-from .pointnet_utils import PointNetEncoder, feature_transform_reguliarzer, PointNetEncoder_sm
+import torch.utils.data
+
+from .pointnet_utils import (
+    PointNetEncoder,
+    PointNetEncoder_sm,
+    feature_transform_reguliarzer,
+)
 
 
 class get_model(nn.Module):
@@ -48,6 +53,7 @@ class get_model_sm(nn.Module):
         if self.softmax_on:
             x = F.log_softmax(x, dim=1)
         return x, trans_feat
+
 
 class get_loss(torch.nn.Module):
     def __init__(self, mat_diff_loss_scale=0.001):

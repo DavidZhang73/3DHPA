@@ -1,7 +1,14 @@
-# coding: utf-8
-import torch
 import torch.nn.functional as F
-from .func import linear_assignment, get_trans_l2_loss, get_rot_l2_loss, get_rot_cd_loss, get_shape_cd_loss, get_total_cd_loss, get_trans_cd_loss
+
+from .func import (
+    get_rot_cd_loss,
+    get_rot_l2_loss,
+    get_shape_cd_loss,
+    get_total_cd_loss,
+    get_trans_cd_loss,
+    get_trans_l2_loss,
+    linear_assignment,
+)
 
 
 def comp_losses(pred_poses, gt_poses, part_pcs, part_valids, match_ids, mse_weight, args=None):
@@ -27,8 +34,13 @@ def comp_losses(pred_poses, gt_poses, part_pcs, part_valids, match_ids, mse_weig
                 cur_gt_quats = cut_gt_poses[:, 3:]
 
                 # linear assignment.
-                matched_pred_ids, matched_gt_ids = linear_assignment(cur_pts, cur_pred_centers, cur_pred_quats,
-                                                                     cur_gt_centers, cur_gt_quats)
+                matched_pred_ids, matched_gt_ids = linear_assignment(
+                    cur_pts,
+                    cur_pred_centers,
+                    cur_pred_quats,
+                    cur_gt_centers,
+                    cur_gt_quats,
+                )
                 pred_poses_per_trans[bs_ind, need_to_match_part] = cur_pred_poses[matched_pred_ids]
                 gt_poses[bs_ind, need_to_match_part] = cut_gt_poses[matched_gt_ids]
 
@@ -52,15 +64,16 @@ def comp_losses(pred_poses, gt_poses, part_pcs, part_valids, match_ids, mse_weig
         shape_cd_loss = shape_cd_loss_per_trans.mean()
         part_cd_loss = part_cd_loss_per_trans.mean()
 
-
         # compute total loss.
         if trans_ind == 0:
-            total_loss = trans_l2_loss * args.loss_weight_trans_l2 + \
-                         rot_l2_loss * args.loss_weight_rot_l2 + \
-                         rot_cd_loss * args.loss_weight_rot_cd + \
-                         trans_cd_loss * args.loss_weight_trans_cd + \
-                         shape_cd_loss * args.loss_weight_shape_cd + \
-                         part_cd_loss * args.loss_weight_part_cd
+            total_loss = (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + trans_cd_loss * args.loss_weight_trans_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+                + part_cd_loss * args.loss_weight_part_cd
+            )
             total_trans_l2_loss = trans_l2_loss
             total_rot_l2_loss = rot_l2_loss
             total_rot_cd_loss = rot_cd_loss
@@ -68,12 +81,14 @@ def comp_losses(pred_poses, gt_poses, part_pcs, part_valids, match_ids, mse_weig
             total_shape_cd_loss = shape_cd_loss
             total_part_cd_loss = part_cd_loss
         else:
-            total_loss += trans_l2_loss * args.loss_weight_trans_l2 + \
-                          rot_l2_loss * args.loss_weight_rot_l2 + \
-                          rot_cd_loss * args.loss_weight_rot_cd + \
-                          trans_cd_loss * args.loss_weight_trans_cd + \
-                          shape_cd_loss * args.loss_weight_shape_cd + \
-                          part_cd_loss * args.loss_weight_part_cd
+            total_loss += (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + trans_cd_loss * args.loss_weight_trans_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+                + part_cd_loss * args.loss_weight_part_cd
+            )
             total_trans_l2_loss += trans_l2_loss
             total_rot_l2_loss += rot_l2_loss
             total_rot_cd_loss += rot_cd_loss
@@ -88,7 +103,15 @@ def comp_losses(pred_poses, gt_poses, part_pcs, part_valids, match_ids, mse_weig
     total_trans_cd_loss /= num_trans
     total_shape_cd_loss /= num_trans
     total_part_cd_loss /= num_trans
-    return total_loss, total_trans_l2_loss, total_rot_l2_loss, total_trans_cd_loss, total_rot_cd_loss, total_shape_cd_loss, total_part_cd_loss
+    return (
+        total_loss,
+        total_trans_l2_loss,
+        total_rot_l2_loss,
+        total_trans_cd_loss,
+        total_rot_cd_loss,
+        total_shape_cd_loss,
+        total_part_cd_loss,
+    )
 
 
 def comp_decoder_losses(pred_poses, gt_poses, pred_cates, gt_cates, part_pcs, pos_ids, args=None):
@@ -123,22 +146,26 @@ def comp_decoder_losses(pred_poses, gt_poses, pred_cates, gt_cates, part_pcs, po
 
         # compute total loss.
         if trans_ind == 0:
-            total_loss = trans_l2_loss * args.loss_weight_trans_l2 + \
-                         rot_l2_loss * args.loss_weight_rot_l2 + \
-                         rot_cd_loss * args.loss_weight_rot_cd + \
-                         shape_cd_loss * args.loss_weight_shape_cd + \
-                         cate_loss * args.loss_weight_cate
+            total_loss = (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+                + cate_loss * args.loss_weight_cate
+            )
             total_trans_l2_loss = trans_l2_loss
             total_rot_l2_loss = rot_l2_loss
             total_rot_cd_loss = rot_cd_loss
             total_shape_cd_loss = shape_cd_loss
             total_cate_loss = cate_loss
         else:
-            total_loss += trans_l2_loss * args.loss_weight_trans_l2 + \
-                          rot_l2_loss * args.loss_weight_rot_l2 + \
-                          rot_cd_loss * args.loss_weight_rot_cd + \
-                          shape_cd_loss * args.loss_weight_shape_cd + \
-                          cate_loss * args.loss_weight_cate
+            total_loss += (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+                + cate_loss * args.loss_weight_cate
+            )
             total_trans_l2_loss += trans_l2_loss
             total_rot_l2_loss += rot_l2_loss
             total_rot_cd_loss += rot_cd_loss
@@ -152,7 +179,14 @@ def comp_decoder_losses(pred_poses, gt_poses, pred_cates, gt_cates, part_pcs, po
     total_shape_cd_loss /= num_trans
     total_cate_loss /= num_trans
 
-    return total_loss, total_trans_l2_loss, total_rot_l2_loss, total_rot_cd_loss, total_shape_cd_loss, total_cate_loss
+    return (
+        total_loss,
+        total_trans_l2_loss,
+        total_rot_l2_loss,
+        total_rot_cd_loss,
+        total_shape_cd_loss,
+        total_cate_loss,
+    )
 
 
 def comp_decoder_losses_v2(pred_poses, gt_poses, part_pcs, pos_ids, args=None):
@@ -183,19 +217,23 @@ def comp_decoder_losses_v2(pred_poses, gt_poses, part_pcs, pos_ids, args=None):
 
         # compute total loss.
         if trans_ind == 0:
-            total_loss = trans_l2_loss * args.loss_weight_trans_l2 + \
-                         rot_l2_loss * args.loss_weight_rot_l2 + \
-                         rot_cd_loss * args.loss_weight_rot_cd + \
-                         shape_cd_loss * args.loss_weight_shape_cd
+            total_loss = (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+            )
             total_trans_l2_loss = trans_l2_loss
             total_rot_l2_loss = rot_l2_loss
             total_rot_cd_loss = rot_cd_loss
             total_shape_cd_loss = shape_cd_loss
         else:
-            total_loss += trans_l2_loss * args.loss_weight_trans_l2 + \
-                          rot_l2_loss * args.loss_weight_rot_l2 + \
-                          rot_cd_loss * args.loss_weight_rot_cd + \
-                          shape_cd_loss * args.loss_weight_shape_cd
+            total_loss += (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+            )
             total_trans_l2_loss += trans_l2_loss
             total_rot_l2_loss += rot_l2_loss
             total_rot_cd_loss += rot_cd_loss
@@ -207,7 +245,13 @@ def comp_decoder_losses_v2(pred_poses, gt_poses, part_pcs, pos_ids, args=None):
     total_rot_cd_loss /= num_trans
     total_shape_cd_loss /= num_trans
 
-    return total_loss, total_trans_l2_loss, total_rot_l2_loss, total_rot_cd_loss, total_shape_cd_loss
+    return (
+        total_loss,
+        total_trans_l2_loss,
+        total_rot_l2_loss,
+        total_rot_cd_loss,
+        total_shape_cd_loss,
+    )
 
 
 def comp_decoder_losses_freeze(pred_poses, gt_poses, part_pcs, part_valids, match_ids, part_mask, args=None):
@@ -237,8 +281,13 @@ def comp_decoder_losses_freeze(pred_poses, gt_poses, part_pcs, part_valids, matc
                 cur_gt_quats = cut_gt_poses[:, 3:]
 
                 # linear assignment.
-                matched_pred_ids, matched_gt_ids = linear_assignment(cur_pts, cur_pred_centers, cur_pred_quats,
-                                                                     cur_gt_centers, cur_gt_quats)
+                matched_pred_ids, matched_gt_ids = linear_assignment(
+                    cur_pts,
+                    cur_pred_centers,
+                    cur_pred_quats,
+                    cur_gt_centers,
+                    cur_gt_quats,
+                )
                 pred_poses_per_trans[bs_ind, need_to_match_part] = cur_pred_poses[matched_pred_ids]
                 gt_poses[bs_ind, need_to_match_part] = cut_gt_poses[matched_gt_ids]
 
@@ -267,8 +316,15 @@ def comp_decoder_losses_freeze(pred_poses, gt_poses, part_pcs, part_valids, matc
         rot_cd_loss_per_trans = rot_dist_1.mean(1) + rot_dist_2.mean(1)
 
         # overall shape cd loss.
-        shape_dist_1, shape_dist_2 = get_shape_cd_loss(part_pcs, pred_rot, gt_rot,
-                                                       pred_trans, gt_trans, part_valids, return_raw=True)
+        shape_dist_1, shape_dist_2 = get_shape_cd_loss(
+            part_pcs,
+            pred_rot,
+            gt_rot,
+            pred_trans,
+            gt_trans,
+            part_valids,
+            return_raw=True,
+        )
         shape_valid = mask_valid.view(batch_size, -1).contiguous()
         shape_dist_1 = shape_dist_1[shape_valid].view(batch_size, part_pcs.size(2)).contiguous()
         shape_dist_2 = shape_dist_2[shape_valid].view(batch_size, part_pcs.size(2)).contiguous()
@@ -282,19 +338,23 @@ def comp_decoder_losses_freeze(pred_poses, gt_poses, part_pcs, part_valids, matc
 
         # compute total loss.
         if trans_ind == 0:
-            total_loss = trans_l2_loss * args.loss_weight_trans_l2 + \
-                         rot_l2_loss * args.loss_weight_rot_l2 + \
-                         rot_cd_loss * args.loss_weight_rot_cd + \
-                         shape_cd_loss * args.loss_weight_shape_cd
+            total_loss = (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+            )
             total_trans_l2_loss = trans_l2_loss
             total_rot_l2_loss = rot_l2_loss
             total_rot_cd_loss = rot_cd_loss
             total_shape_cd_loss = shape_cd_loss
         else:
-            total_loss += trans_l2_loss * args.loss_weight_trans_l2 + \
-                          rot_l2_loss * args.loss_weight_rot_l2 + \
-                          rot_cd_loss * args.loss_weight_rot_cd + \
-                          shape_cd_loss * args.loss_weight_shape_cd
+            total_loss += (
+                trans_l2_loss * args.loss_weight_trans_l2
+                + rot_l2_loss * args.loss_weight_rot_l2
+                + rot_cd_loss * args.loss_weight_rot_cd
+                + shape_cd_loss * args.loss_weight_shape_cd
+            )
             total_trans_l2_loss += trans_l2_loss
             total_rot_l2_loss += rot_l2_loss
             total_rot_cd_loss += rot_cd_loss
@@ -305,5 +365,10 @@ def comp_decoder_losses_freeze(pred_poses, gt_poses, part_pcs, part_valids, matc
     total_rot_l2_loss /= num_trans
     total_rot_cd_loss /= num_trans
     total_shape_cd_loss /= num_trans
-    return total_loss, total_trans_l2_loss, total_rot_l2_loss, total_rot_cd_loss, total_shape_cd_loss
-
+    return (
+        total_loss,
+        total_trans_l2_loss,
+        total_rot_l2_loss,
+        total_rot_cd_loss,
+        total_shape_cd_loss,
+    )

@@ -1,26 +1,27 @@
 import argparse
-import h5py
-import torch
-import scipy.spatial
 import collections
-from matplotlib import pyplot as plt
-import pytorch3d.ops
-import numpy as np
 import random
+
+import h5py
+import numpy as np
+import scipy.spatial
+import torch
+from matplotlib import pyplot as plt
+
 
 def softmax(x):
     exp_x = torch.exp(x)
     result = torch.zeros([1, 8]).cuda(device=6)
     for y in exp_x:
-        result = torch.cat((result, (y/torch.sum(y)).unsqueeze(0)), 0)
+        result = torch.cat((result, (y / torch.sum(y)).unsqueeze(0)), 0)
     return result[1:321, :]
 
 
 def create_output(vertices, colors, filename):
     colors = colors.reshape(-1, 3)
     vertices = np.hstack([vertices.reshape(-1, 3), colors])
-    np.savetxt(filename, vertices, fmt='%f %f %f %d %d %d')     
-    ply_header = '''ply
+    np.savetxt(filename, vertices, fmt="%f %f %f %d %d %d")
+    ply_header = """ply
     		format ascii 1.0
     		element vertex %(vert_num)d
     		property float x
@@ -31,12 +32,12 @@ def create_output(vertices, colors, filename):
     		property uchar blue
     		end_header
     		\n
-    		'''
-    with open(filename, 'r+') as f:
+    		"""
+    with open(filename, "r+") as f:
         old = f.read()
         f.seek(0)
         f.write(ply_header % dict(vert_num=len(vertices)))
-        f.write(old)     
+        f.write(old)
 
 
 def Addlabel(x, lst):
@@ -48,9 +49,9 @@ def Addlabel(x, lst):
 
 def load_h5_data_label_seg(file_name):
     f = h5py.File(file_name)
-    data = f['data'][:]  
-    label = f['label'][:]  
-    seg = f['pid'][:] 
+    data = f["data"][:]
+    label = f["label"][:]
+    seg = f["pid"][:]
     return data, label, seg
 
 
@@ -64,15 +65,15 @@ def generate_pairs(x, num):
         if cnt < 100:
             sample_patch = cnt
             t1 = sample_patch
-            t2 = sample_patch+1
+            t2 = sample_patch + 1
         elif cnt < 200:
-            sample_patch = cnt-100
+            sample_patch = cnt - 100
             t1 = sample_patch
-            t2 = sample_patch+9
+            t2 = sample_patch + 9
         elif cnt < 290:
-            sample_patch = cnt-200
+            sample_patch = cnt - 200
             t1 = sample_patch
-            t2 = sample_patch+25
+            t2 = sample_patch + 25
         else:
             sample_patch = random.randint(1, 70)
             if flag[sample_patch] == 1:
@@ -85,7 +86,7 @@ def generate_pairs(x, num):
 
         cangle[cnt] = CosVector(normals_ds[t1], normals_ds[t2])
         cnt += 1
-    
+
     chooses = torch.tensor(chooses, dtype=torch.int64)
     chooses = chooses.permute(1, 0)
     cangle = torch.tensor(cangle, dtype=torch.float64)
@@ -94,7 +95,7 @@ def generate_pairs(x, num):
 
 def import_class(name):
     try:
-        components = name.split('.')
+        components = name.split(".")
         module = __import__(components[0])
         for c in components[1:]:
             module = getattr(module, c)
@@ -104,15 +105,12 @@ def import_class(name):
 
 
 def save_weights(epoch, model, optimizer, save_path):
-    model_weights = collections.OrderedDict([
-        (k.split('module.')[-1], v.cpu())
-        for k, v in model.state_dict().items()
-    ])
+    model_weights = collections.OrderedDict([(k.split("module.")[-1], v.cpu()) for k, v in model.state_dict().items()])
     optim_weights = optimizer.state_dict()
     save_dict = {
-        'epoch': epoch,
-        'model': model_weights,
-        'optimizer': optim_weights,
+        "epoch": epoch,
+        "model": model_weights,
+        "optimizer": optim_weights,
     }
     torch.save(save_dict, save_path)
 
@@ -148,15 +146,17 @@ def knn2(x, y, k, batch_x=None, batch_y=None):
     x, y = x - min_xy, y - min_xy
 
     max_xy = max(x.max().item(), y.max().item())
-    x, y, = x / max_xy, y / max_xy
+    (
+        x,
+        y,
+    ) = x / max_xy, y / max_xy
 
     # Concat batch/features to ensure no cross-links between examples exist.
     x = torch.cat([x, 2 * x.size(1) * batch_x.view(-1, 1).to(x.dtype)], dim=-1)
     y = torch.cat([y, 2 * y.size(1) * batch_y.view(-1, 1).to(y.dtype)], dim=-1)
 
     tree = scipy.spatial.cKDTree(x.detach().numpy())
-    dist, col = tree.query(
-        y.detach().cpu(), k=k, distance_upper_bound=x.size(1))
+    dist, col = tree.query(y.detach().cpu(), k=k, distance_upper_bound=x.size(1))
     dist = torch.from_numpy(dist).to(x.dtype)
     col = torch.from_numpy(col).to(torch.long)
     row = torch.arange(col.size(0), dtype=torch.long).view(-1, 1).repeat(1, k)
@@ -186,8 +186,7 @@ def radius(x, y, r, batch_x=None, batch_y=None, max_num_neighbors=64):
     y = torch.cat([y, 2 * r * batch_y.view(-1, 1).to(y.dtype)], dim=-1)
 
     tree = scipy.spatial.cKDTree(x.detach().numpy())
-    _, col = tree.query(
-        y.detach().numpy(), k=max_num_neighbors, distance_upper_bound=r + 1e-8)
+    _, col = tree.query(y.detach().numpy(), k=max_num_neighbors, distance_upper_bound=r + 1e-8)
     col = [torch.from_numpy(c).to(torch.long) for c in col]
     row = [torch.full_like(c, i) for i, c in enumerate(col)]
     row, col = torch.cat(row, dim=0), torch.cat(col, dim=0)
@@ -197,25 +196,25 @@ def radius(x, y, r, batch_x=None, batch_y=None, max_num_neighbors=64):
 
 def load_h5(file_name):
     f = h5py.File(file_name)
-    data = f['data'][:]
-    label = f['label'][:]
-    normal = f['normal'][:]
+    data = f["data"][:]
+    label = f["label"][:]
+    normal = f["normal"][:]
     return data, label, normal
 
 
 def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def get_total_parameters(model):
     total = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    return {'Total': total, 'Trainable': trainable}
+    return {"Total": total, "Trainable": trainable}
 
 
 def knn_o(x, k):
@@ -223,16 +222,16 @@ def knn_o(x, k):
     x2 = torch.sum(x**2, dim=1, keepdim=True)
     pairwise_distance = -x2 - inner - x2.transpose(2, 1)
     indices = pairwise_distance.topk(k=k, dim=-1)[1]
-    return indices  
+    return indices
+
 
 def get_edge_feature(x, k=20):
     batch_siz = x.size(0)
     num_points = x.size(2)
     num_feats = x.size(1)
-    indices = knn_o(x.view(batch_siz, -1, num_points), k=k) 
+    indices = knn_o(x.view(batch_siz, -1, num_points), k=k)
 
-    indices_base = torch.arange(
-        0, batch_siz, device=x.device).view(-1, 1, 1) * num_points
+    indices_base = torch.arange(0, batch_siz, device=x.device).view(-1, 1, 1) * num_points
     indices = indices + indices_base
     indices = indices.view(-1)
 
@@ -245,7 +244,7 @@ def get_edge_feature(x, k=20):
 
 
 def CosVector(x, y):
-    if(len(x) != len(y)):
+    if len(x) != len(y):
         print("error input, x and y not in the same space")
         return
     result1 = 0.0
@@ -255,11 +254,11 @@ def CosVector(x, y):
         result1 += x[i] * y[i]
         result2 += x[i] ** 2
         result3 += y[i] ** 2
-    return result1/((result2 * result3) ** 0.5)
+    return result1 / ((result2 * result3) ** 0.5)
 
 
 def compute_dis2(x, y):
-    dis2 = (x[0]-y[0])**2 + (x[1]-y[1])**2 + (x[2]-y[2])**2
+    dis2 = (x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2 + (x[2] - y[2]) ** 2
     return dis2
 
 
@@ -267,5 +266,5 @@ def main():
     print("load tools")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

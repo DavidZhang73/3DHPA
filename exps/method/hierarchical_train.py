@@ -1,36 +1,55 @@
 #!/usr/bin/env python3
 import time
-import copy
+
 import torch
-from scripts.z_utils import EtaMeter, AverageMeter, ProgressMeter, adjust_learning_rate, adjust_moco_momentum
 from datasets.partnet import DATA_FEATURES as data_features
-from models.losses import comp_losses
+from scripts.z_utils import AverageMeter, EtaMeter, ProgressMeter, adjust_learning_rate
 
 
-def train_one_epoch(train_loader, model, optimizer, scaler, summary_writer, log_writer, epoch, countdown, args):
+def train_one_epoch(
+    train_loader,
+    model,
+    optimizer,
+    scaler,
+    summary_writer,
+    log_writer,
+    epoch,
+    countdown,
+    args,
+):
+    eta_time = EtaMeter("Eta")
+    batch_time = AverageMeter("Time", ":6.6f")
+    data_time = AverageMeter("Data", ":6.6f")
 
-    eta_time = EtaMeter('Eta')
-    batch_time = AverageMeter('Time', ':6.6f')
-    data_time = AverageMeter('Data', ':6.6f')
+    learning_rates = AverageMeter("lr", ":6.6f")
 
-    learning_rates = AverageMeter('lr', ':6.6f')
-
-    losses = AverageMeter('TotalLoss', ':6.6f')
-    trans_l2_losses = AverageMeter('TransL2Loss', ':6.6f')
-    rot_l2_losses = AverageMeter('RotL2Loss', ':6.6f')
-    trans_cd_losses = AverageMeter('TransCDLoss', ':6.6f')
-    rot_cd_losses = AverageMeter('RotCDLoss', ':6.6f')
-    shape_cd_losses = AverageMeter('ShapeCDLoss', ':6.6f')
-    part_cd_losses = AverageMeter('PartCDLoss', ':6.6f')
-    pointnet_losses = AverageMeter('PointNetLoss', ':6.6f')
+    losses = AverageMeter("TotalLoss", ":6.6f")
+    trans_l2_losses = AverageMeter("TransL2Loss", ":6.6f")
+    rot_l2_losses = AverageMeter("RotL2Loss", ":6.6f")
+    trans_cd_losses = AverageMeter("TransCDLoss", ":6.6f")
+    rot_cd_losses = AverageMeter("RotCDLoss", ":6.6f")
+    shape_cd_losses = AverageMeter("ShapeCDLoss", ":6.6f")
+    part_cd_losses = AverageMeter("PartCDLoss", ":6.6f")
+    pointnet_losses = AverageMeter("PointNetLoss", ":6.6f")
 
     progress = ProgressMeter(
         len(train_loader),
-        [eta_time, batch_time, data_time,learning_rates, losses,
-         trans_l2_losses, rot_l2_losses, trans_cd_losses,
-         rot_cd_losses, shape_cd_losses, part_cd_losses,
-         pointnet_losses],
-        prefix="Epoch: [{}]".format(epoch + 1))  
+        [
+            eta_time,
+            batch_time,
+            data_time,
+            learning_rates,
+            losses,
+            trans_l2_losses,
+            rot_l2_losses,
+            trans_cd_losses,
+            rot_cd_losses,
+            shape_cd_losses,
+            part_cd_losses,
+            pointnet_losses,
+        ],
+        prefix=f"Epoch: [{epoch + 1}]",
+    )
 
     # switch to train mode.
     model.train()
@@ -47,12 +66,12 @@ def train_one_epoch(train_loader, model, optimizer, scaler, summary_writer, log_
         learning_rates.update(optimizer.param_groups[0]["lr"])
 
         # data pre-process.
-        part_pcs = torch.cat(batch_data[data_features.index('part_pcs')], dim=0)  
-        part_valids = torch.cat(batch_data[data_features.index(r'part_valids')], dim=0)  
-        gt_part_poses = torch.cat(batch_data[data_features.index('part_poses')], dim=0)  
-        match_ids = batch_data[data_features.index('match_ids')]  
-        part_ids = torch.cat(batch_data[data_features.index('part_ids')], dim=0) 
-        contact_points = torch.cat(batch_data[data_features.index('contact_points')], dim=0) 
+        part_pcs = torch.cat(batch_data[data_features.index("part_pcs")], dim=0)
+        part_valids = torch.cat(batch_data[data_features.index(r"part_valids")], dim=0)
+        gt_part_poses = torch.cat(batch_data[data_features.index("part_poses")], dim=0)
+        match_ids = batch_data[data_features.index("match_ids")]
+        part_ids = torch.cat(batch_data[data_features.index("part_ids")], dim=0)
+        contact_points = torch.cat(batch_data[data_features.index("contact_points")], dim=0)
 
         if args.gpu is not None:
             part_pcs = part_pcs.cuda(args.gpu, non_blocking=False)
@@ -62,8 +81,25 @@ def train_one_epoch(train_loader, model, optimizer, scaler, summary_writer, log_
 
         # compute output.
         with torch.cuda.amp.autocast(True):
-            pred_part_poses, loss, trans_l2_loss, rot_l2_loss, trans_cd_loss, rot_cd_loss, shape_cd_loss, part_cd_loss, pointnet_loss, output \
-                = model(part_pcs, part_valids, gt_part_poses, match_ids, part_ids, contact_points)
+            (
+                pred_part_poses,
+                loss,
+                trans_l2_loss,
+                rot_l2_loss,
+                trans_cd_loss,
+                rot_cd_loss,
+                shape_cd_loss,
+                part_cd_loss,
+                pointnet_loss,
+                output,
+            ) = model(
+                part_pcs,
+                part_valids,
+                gt_part_poses,
+                match_ids,
+                part_ids,
+                contact_points,
+            )
 
         # compute gradient and do SGD step.
         optimizer.zero_grad()

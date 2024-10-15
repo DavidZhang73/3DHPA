@@ -1,10 +1,10 @@
-import torch
 import chamfer_cuda
-import ipdb
+import torch
 
 
 def safe_sqrt(x, eps=1e-12):
     return torch.sqrt(torch.clamp(x, eps))
+
 
 class ChamferDistanceFunction(torch.autograd.Function):
     @staticmethod
@@ -50,7 +50,7 @@ def chamfer_distance(xyz1, xyz2, transpose=True, sqrt=False, eps=1e-12):
         xyz1 = xyz1.unsqueeze(0)
     if xyz2.dim() == 2:
         xyz2 = xyz2.unsqueeze(0)
-    
+
     if transpose:
         xyz1 = xyz1.transpose(1, 2)
         xyz2 = xyz2.transpose(1, 2)

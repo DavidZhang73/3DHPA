@@ -1,6 +1,6 @@
-import torch
 import numpy as np
-import time
+import torch
+
 from emd import earth_mover_distance
 
 # gt
@@ -13,10 +13,12 @@ print(p2)
 p1.requires_grad = True
 p2.requires_grad = True
 
-gt_dist = (((p1[0, 0] - p2[0, 1])**2).sum() + ((p1[0, 1] - p2[0, 0])**2).sum()) / 2 +  \
-         (((p1[1, 0] - p2[1, 1])**2).sum() + ((p1[1, 1] - p2[1, 0])**2).sum()) * 2 + \
-         (((p1[2, 0] - p2[2, 1])**2).sum() + ((p1[2, 1] - p2[2, 0])**2).sum()) / 3
-print('gt_dist: ', gt_dist)
+gt_dist = (
+    (((p1[0, 0] - p2[0, 1]) ** 2).sum() + ((p1[0, 1] - p2[0, 0]) ** 2).sum()) / 2
+    + (((p1[1, 0] - p2[1, 1]) ** 2).sum() + ((p1[1, 1] - p2[1, 0]) ** 2).sum()) * 2
+    + (((p1[2, 0] - p2[2, 1]) ** 2).sum() + ((p1[2, 1] - p2[2, 0]) ** 2).sum()) / 3
+)
+print("gt_dist: ", gt_dist)
 
 gt_dist.backward()
 print(p1.grad)
@@ -41,4 +43,3 @@ print(loss)
 loss.backward()
 print(p1.grad)
 print(p2.grad)
-

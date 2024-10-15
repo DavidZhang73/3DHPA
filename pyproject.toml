@@ -1,0 +1,21 @@
+# https://docs.astral.sh/ruff/configuration/
+[tool.ruff]
+line-length = 120
+lint.select = [
+    "F",  # pyflakes
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "UP", # pyupgrade
+]
+lint.ignore = ["F401"]
+extend-include = ["*.ipynb"]
+
+# https://github.com/microsoft/pyright/blob/main/docs/configuration.md#sample-pyprojecttoml-file
+[tool.pyright]
+exclude = [
+    "**/__pycache__",
+    "data",
+    "logs",
+    "prep_data",
+]
+typeCheckingMode = "off"

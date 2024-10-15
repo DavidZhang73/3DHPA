@@ -9,19 +9,17 @@ Notes:
 from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
-
 setup(
-    name='chamfer_ext',
+    name="chamfer_ext",
     ext_modules=[
         CUDAExtension(
-            name='chamfer_cuda',
+            name="chamfer_cuda",
             sources=[
-                'cuda/chamfer.cpp',
-                'cuda/chamfer_kernel.cu',
+                "cuda/chamfer.cpp",
+                "cuda/chamfer_kernel.cu",
             ],
-            extra_compile_args={'cxx': ['-g'], 'nvcc': ['-O2']}
+            extra_compile_args={"cxx": ["-g"], "nvcc": ["-O2"]},
         ),
     ],
-    cmdclass={
-        'build_ext': BuildExtension
-    })
+    cmdclass={"build_ext": BuildExtension},
+)

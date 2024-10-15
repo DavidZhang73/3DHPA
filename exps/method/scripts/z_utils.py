@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
+import datetime
+import math
 import os
 import os.path as osp
-import math
 import random
-import warnings
 import shutil
-import time
-import datetime
-from functools import partial
-import numpy as np
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.utils.data.distributed
+import warnings
 from collections import OrderedDict
+
+import torch.backends.cudnn as cudnn
+import torch.nn.parallel
+import torch.utils.data.distributed
 
 
 def func_init(args):
@@ -21,22 +19,23 @@ def func_init(args):
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
-        warnings.warn('You have chosen to seed training. '
-                      'This will turn on the CUDNN deterministic setting, '
-                      'which can slow down your training considerably! '
-                      'You may see unexpected behavior when restarting '
-                      'from checkpoints.')
+        warnings.warn(
+            "You have chosen to seed training. "
+            "This will turn on the CUDNN deterministic setting, "
+            "which can slow down your training considerably! "
+            "You may see unexpected behavior when restarting "
+            "from checkpoints."
+        )
 
     if args.gpu is not None:
-        warnings.warn('You have chosen a specific GPU. This will completely '
-                      'disable data parallelism.')
-        print("Use GPU: {} for training".format(args.gpu))
+        warnings.warn("You have chosen a specific GPU. This will completely " "disable data parallelism.")
+        print(f"Use GPU: {args.gpu} for training")
 
 
 def device_func(model, args):
     ngpus_per_node = torch.cuda.device_count()
     if not torch.cuda.is_available():
-        print('using CPU, this will be slow.')
+        print("using CPU, this will be slow.")
     elif args.distributed:
         # apply SyncBN
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
@@ -75,9 +74,9 @@ def adjust_learning_rate(optimizer, epoch, args):
     if epoch < args.warmup_epochs:
         lr = lr * epoch / args.warmup_epochs
     else:
-        lr = lr * 0.5 * (1. + math.cos(math.pi * (epoch - args.warmup_epochs) / (args.epochs - args.warmup_epochs)))
+        lr = lr * 0.5 * (1.0 + math.cos(math.pi * (epoch - args.warmup_epochs) / (args.epochs - args.warmup_epochs)))
     for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+        param_group["lr"] = lr
     return lr
 
 
@@ -88,19 +87,20 @@ def adjust_moco_momentum(epoch, args, q_on=True):
     else:
         moco_m = args.moco_m_k
 
-    m = 1. - 0.5 * (1. + math.cos(math.pi * epoch / args.epochs)) * (1. - moco_m)
+    m = 1.0 - 0.5 * (1.0 + math.cos(math.pi * epoch / args.epochs)) * (1.0 - moco_m)
     return m
 
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'model_best.pth.tar')
+        shutil.copyfile(filename, "model_best.pth.tar")
 
 
-class AverageMeter(object):
+class AverageMeter:
     """Computes and stores the average and current value"""
-    def __init__(self, name, fmt=':f'):
+
+    def __init__(self, name, fmt=":f"):
         self.name = name
         self.fmt = fmt
         self.reset()
@@ -116,28 +116,29 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-    
+
     def newupdate(self, acc, valid):
         self.val = acc
         self.sum += acc
         self.count += valid
-        self.avg = self.sum / self.count *100.
+        self.avg = self.sum / self.count * 100.0
 
     def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
         return fmtstr.format(**self.__dict__)
 
 
-class EtaMeter(object):
+class EtaMeter:
     """Computes and stores the average and current value"""
+
     def __init__(self, name):
         self.name = name
         self.reset()
 
     def reset(self):
         self.val = 0
-        self.avg = ''
-        self.ep = ''
+        self.avg = ""
+        self.ep = ""
 
     def update(self, val):
         self.val = val
@@ -147,11 +148,11 @@ class EtaMeter(object):
         self.countdown = str(datetime.timedelta(seconds=int(countdown)))
 
     def __str__(self):
-        fmtstr = '{name} {avg} {countdown}'
+        fmtstr = "{name} {avg} {countdown}"
         return fmtstr.format(**self.__dict__)
 
 
-class ProgressMeter(object):
+class ProgressMeter:
     def __init__(self, num_batches, meters, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
         self.meters = meters
@@ -163,13 +164,13 @@ class ProgressMeter(object):
     def display(self, batch):
         entries = [self.prefix + self.batch_fmtstr.format(batch)]
         entries += [str(meter) for meter in self.meters]
-        print('\t'.join(entries))
-        return '\t'.join(entries)
+        print("\t".join(entries))
+        return "\t".join(entries)
 
     def _get_batch_fmtstr(self, num_batches):
         num_digits = len(str(num_batches // 1))
-        fmt = '{:' + str(num_digits) + 'd}'
-        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
+        fmt = "{:" + str(num_digits) + "d}"
+        return "[" + fmt + "/" + fmt.format(num_batches) + "]"
 
 
 def collate_feats_with_none(b):
@@ -180,41 +181,50 @@ def collate_feats_with_none(b):
 def save_model(epoch, scaler, output_dir, model, optimizer, part_acc, best_acc, args):
     if (epoch + 1) % args.save_freq == 0 or epoch + 1 == args.epochs:
         if args.rank == 0:  # only the first GPU saves checkpoint.
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scaler': scaler.state_dict(),
-                'part_acc': part_acc
-            }, is_best=False, filename=osp.join(output_dir, 'checkpoint_%04d.pth.tar' % (epoch + 1)))
+            save_checkpoint(
+                {
+                    "epoch": epoch + 1,
+                    "state_dict": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "scaler": scaler.state_dict(),
+                    "part_acc": part_acc,
+                },
+                is_best=False,
+                filename=osp.join(output_dir, "checkpoint_%04d.pth.tar" % (epoch + 1)),
+            )
         if part_acc > best_acc:
             if args.rank == 0:
-                save_checkpoint({
-                    'epoch': epoch + 1,
-                    'state_dict': model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
-                    'scaler': scaler.state_dict(),
-                    'part_acc': part_acc
-                }, is_best=True, filename=osp.join(output_dir, 'checkpoint_best.pth.tar'))
+                save_checkpoint(
+                    {
+                        "epoch": epoch + 1,
+                        "state_dict": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "scaler": scaler.state_dict(),
+                        "part_acc": part_acc,
+                    },
+                    is_best=True,
+                    filename=osp.join(output_dir, "checkpoint_best.pth.tar"),
+                )
+
 
 def load_old_model(model, args, resume_on=False):
     if resume_on:
         args.checkpoint = args.resume
 
     if os.path.isfile(args.checkpoint):
-        print("=> loading checkpoint '{}'".format(args.checkpoint))
+        print(f"=> loading checkpoint '{args.checkpoint}'")
         if args.gpu is None:
             checkpoint = torch.load(args.checkpoint)
         else:
             # Map model to be loaded to specified single gpu.
-            loc = 'cuda:{}'.format(args.gpu)
+            loc = f"cuda:{args.gpu}"
             checkpoint = torch.load(args.checkpoint, map_location=loc)
-            print(checkpoint['opt_network']['param_groups'])
+            print(checkpoint["opt_network"]["param_groups"])
             exit()
         try:
-            model.load_state_dict(checkpoint['opt_network'])
+            model.load_state_dict(checkpoint["opt_network"])
         except:
-            old_state_dict = checkpoint['state_dict']
+            old_state_dict = checkpoint["state_dict"]
             new_state_dict = OrderedDict()
             for key, value in old_state_dict.items():
                 if "module" in key:
@@ -224,10 +234,10 @@ def load_old_model(model, args, resume_on=False):
                 model.load_state_dict(new_state_dict, strict=False)
             else:
                 model.load_state_dict(new_state_dict)
-        print("=> loaded checkpoint '{}' (epoch {})".format(args.checkpoint, checkpoint['epoch']))
+        print("=> loaded checkpoint '{}' (epoch {})".format(args.checkpoint, checkpoint["epoch"]))
         return model
     else:
-        print("=> no checkpoint found at '{}'".format(args.checkpoint))
+        print(f"=> no checkpoint found at '{args.checkpoint}'")
 
 
 def load_model(model, args, resume_on=False):
@@ -235,18 +245,18 @@ def load_model(model, args, resume_on=False):
         args.checkpoint = args.resume
 
     if os.path.isfile(args.checkpoint):
-        print("=> loading checkpoint '{}'".format(args.checkpoint))
+        print(f"=> loading checkpoint '{args.checkpoint}'")
         if args.gpu is None:
             checkpoint = torch.load(args.checkpoint)
         else:
             # Map model to be loaded to specified single gpu.
-            loc = 'cuda:{}'.format(args.gpu)
+            loc = f"cuda:{args.gpu}"
             checkpoint = torch.load(args.checkpoint, map_location=loc)
         try:
-            model.load_state_dict(checkpoint['state_dict'])
+            model.load_state_dict(checkpoint["state_dict"])
             # model.load_state_dict(checkpoint)
         except:
-            old_state_dict = checkpoint['state_dict']
+            old_state_dict = checkpoint["state_dict"]
             new_state_dict = OrderedDict()
             for key, value in old_state_dict.items():
                 if "module" in key:
@@ -256,8 +266,7 @@ def load_model(model, args, resume_on=False):
                 model.load_state_dict(new_state_dict, strict=False)
             else:
                 model.load_state_dict(new_state_dict)
-        print("=> loaded checkpoint '{}' (epoch {})".format(args.checkpoint, checkpoint['epoch']))
+        print("=> loaded checkpoint '{}' (epoch {})".format(args.checkpoint, checkpoint["epoch"]))
         return model
     else:
-        print("=> no checkpoint found at '{}'".format(args.checkpoint))
-
+        print(f"=> no checkpoint found at '{args.checkpoint}'")

@@ -1,7 +1,7 @@
-# coding: utf-8
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../utils'))
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../utils"))
 import torch
 from cd.chamfer import chamfer_distance
 from quaternion import qrot
@@ -10,6 +10,7 @@ from scipy.optimize import linear_sum_assignment
 
 def linear_assignment(pts, centers1, quats1, centers2, quats2):
     import random
+
     pts_to_select = torch.tensor(random.sample([i for i in range(pts.size(1))], 100))
     pts = pts[:, pts_to_select]
     cur_part_cnt, num_point, _ = pts.size()
@@ -32,18 +33,18 @@ def linear_assignment(pts, centers1, quats1, centers2, quats2):
     return rind, cind
 
 
-def smooth_l1_loss(input, target, beta=1. / 12, reduction = 'none'):
+def smooth_l1_loss(input, target, beta=1.0 / 12, reduction="none"):
     n = torch.abs(input - target)
     cond = n < beta
-    ret = torch.where(cond, 0.5 * n ** 2 / beta, n - 0.5 * beta)
-    if reduction != 'none':
-        ret = torch.mean(ret) if reduction == 'mean' else torch.sum(ret)
+    ret = torch.where(cond, 0.5 * n**2 / beta, n - 0.5 * beta)
+    if reduction != "none":
+        ret = torch.mean(ret) if reduction == "mean" else torch.sum(ret)
     return ret
 
 
 def get_trans_l2_loss(trans1, trans2, valids, mse_weight, return_raw=False):
     loss_per_data = smooth_l1_loss(trans1, trans2)
-    loss_per_data = (loss_per_data*mse_weight).sum(dim=-1)
+    loss_per_data = (loss_per_data * mse_weight).sum(dim=-1)
 
     if return_raw:
         pass
@@ -67,6 +68,7 @@ def get_rot_l2_loss(pts, quat1, quat2, valids, return_raw=False):
         loss_per_data = (loss_per_data * valids).sum(1) / valids.sum(1)
 
     return loss_per_data
+
 
 def get_trans_cd_loss(pts, center1, center2, valids, return_raw=False):
     batch_size, _, num_point, _ = pts.size()
@@ -103,7 +105,8 @@ def get_rot_cd_loss(pts, quat1, quat2, valids, return_raw=False):
         return dist1, dist2
     else:
         return loss_per_data
-    
+
+
 def batch_get_contact_point_loss(center, quat, contact_points, sym_info):
     batch_size = center.shape[0]
     num_part = center.shape[1]
@@ -123,7 +126,14 @@ def batch_get_contact_point_loss(center, quat, contact_points, sym_info):
                     sym2 = sym_info[b, j]
                     point_list_1 = get_possible_point_list2(contact_point_1, sym1)
                     point_list_2 = get_possible_point_list2(contact_point_2, sym2)
-                    dist = get_min_l2_dist2(point_list_1, point_list_2, center[b, i, :], center[b, j, :], quat[b, i, :], quat[b, j, :])  # 1
+                    dist = get_min_l2_dist2(
+                        point_list_1,
+                        point_list_2,
+                        center[b, i, :],
+                        center[b, j, :],
+                        quat[b, i, :],
+                        quat[b, j, :],
+                    )  # 1
                     if dist < 0.01:
                         count += 1
                         batch_count[b] += 1
@@ -133,18 +143,20 @@ def batch_get_contact_point_loss(center, quat, contact_points, sym_info):
         contact_point_loss[b] = sum_loss
     return contact_point_loss, count, total_num, batch_count, batch_total_num
 
+
 def get_sym_point2(point, x, y, z):
     if x:
-        point[0] = - point[0]
+        point[0] = -point[0]
     if y:
-        point[1] = - point[1]
+        point[1] = -point[1]
     if z:
-        point[2] = - point[2]
+        point[2] = -point[2]
 
     return point.tolist()
 
+
 def get_possible_point_list2(point, sym):
-    sym = torch.tensor([1.0,1.0,1.0]) 
+    sym = torch.tensor([1.0, 1.0, 1.0])
     point_list = []
     if sym.equal(torch.tensor([0.0, 0.0, 0.0])):
         point_list.append(get_sym_point2(point, 0, 0, 0))
@@ -184,10 +196,10 @@ def get_possible_point_list2(point, sym):
 
     return point_list
 
-def get_min_l2_dist2(list1, list2, center1, center2, quat1, quat2):
 
-    list1 = torch.tensor(list1) # m x 3
-    list2 = torch.tensor(list2) # n x 3
+def get_min_l2_dist2(list1, list2, center1, center2, quat1, quat2):
+    list1 = torch.tensor(list1)  # m x 3
+    list2 = torch.tensor(list2)  # n x 3
     len1 = list1.shape[0]
     len2 = list2.shape[0]
     center1 = center1.unsqueeze(0).repeat(len1, 1)
@@ -201,29 +213,31 @@ def get_min_l2_dist2(list1, list2, center1, center2, quat1, quat2):
     mat1 = list1.unsqueeze(1).repeat(1, len2, 1)
     mat2 = list2.unsqueeze(0).repeat(len1, 1, 1)
     mat = (mat1 - mat2) * (mat1 - mat2)
-    #ipdb.set_trace()
+    # ipdb.set_trace()
     mat = mat.sum(dim=-1)
     return mat.min()
 
-def get_shape_cd_loss2(pts, quat1, quat2, valids, center1, center2):
-        batch_size = pts.shape[0]
-        num_part = pts.shape[1]
-        num_point = pts.shape[2]
-        center1 = center1.unsqueeze(2).repeat(1,1,num_point,1)
-        center2 = center2.unsqueeze(2).repeat(1,1,num_point,1)
-        pts1 = qrot(quat1.unsqueeze(2).repeat(1, 1, num_point, 1), pts) + center1
-        pts2 = qrot(quat2.unsqueeze(2).repeat(1, 1, num_point, 1), pts) + center2
 
-        pts1 = pts1.view(batch_size,num_part*num_point,3)
-        pts2 = pts2.view(batch_size,num_part*num_point,3)
-        dist1, dist2 = chamfer_distance(pts1, pts2, transpose=False)
-        valids = valids.unsqueeze(2).repeat(1,1,1000).view(batch_size,-1)
-        dist1 = dist1 * valids
-        dist2 = dist2 * valids
-        loss_per_data = torch.mean(dist1, dim=1) + torch.mean(dist2, dim=1)
-        
-        loss_per_data = loss_per_data.to(center1.device)
-        return loss_per_data
+def get_shape_cd_loss2(pts, quat1, quat2, valids, center1, center2):
+    batch_size = pts.shape[0]
+    num_part = pts.shape[1]
+    num_point = pts.shape[2]
+    center1 = center1.unsqueeze(2).repeat(1, 1, num_point, 1)
+    center2 = center2.unsqueeze(2).repeat(1, 1, num_point, 1)
+    pts1 = qrot(quat1.unsqueeze(2).repeat(1, 1, num_point, 1), pts) + center1
+    pts2 = qrot(quat2.unsqueeze(2).repeat(1, 1, num_point, 1), pts) + center2
+
+    pts1 = pts1.view(batch_size, num_part * num_point, 3)
+    pts2 = pts2.view(batch_size, num_part * num_point, 3)
+    dist1, dist2 = chamfer_distance(pts1, pts2, transpose=False)
+    valids = valids.unsqueeze(2).repeat(1, 1, 1000).view(batch_size, -1)
+    dist1 = dist1 * valids
+    dist2 = dist2 * valids
+    loss_per_data = torch.mean(dist1, dim=1) + torch.mean(dist2, dim=1)
+
+    loss_per_data = loss_per_data.to(center1.device)
+    return loss_per_data
+
 
 def get_shape_cd_loss(pts, quat1, quat2, center1, center2, valids, return_raw=False):
     batch_size, num_part, num_point, _ = pts.size()
@@ -245,10 +259,11 @@ def get_shape_cd_loss(pts, quat1, quat2, center1, center2, valids, return_raw=Fa
     else:
         return loss_per_data
 
+
 def get_shape_transformed(pts, quat, center):
     """
-        Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
-        Output: B
+    Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
+    Output: B
     """
     batch_size, num_part, num_point, _ = pts.size()
 
@@ -262,8 +277,8 @@ def get_shape_transformed(pts, quat, center):
 # Following the implementation in Generative 3D Part Assembly via Dynamic Graph Learning
 def get_shape_cd_loss_default(pts, quat1, quat2, center1, center2, valids, return_raw=False):
     """
-        Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
-        Output: B
+    Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
+    Output: B
     """
     batch_size, num_part, num_point, _ = pts.size()
 
@@ -288,8 +303,8 @@ def get_shape_cd_loss_default(pts, quat1, quat2, center1, center2, valids, retur
 
 def get_total_cd_loss(pts, quat1, quat2, center1, center2, valids):
     """
-        Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
-        Output: B, B x P
+    Input: B x P x N x 3, B x P x 3, B x P x 3, B x P x 4, B x P x 4, B x P
+    Output: B, B x P
     """
     batch_size, num_part, num_point, _ = pts.size()
 
@@ -312,19 +327,19 @@ def get_total_cd_loss(pts, quat1, quat2, center1, center2, valids):
 def get_sym_point(point, x, y, z):
     if point.dim() == 1:
         if x:
-            point[0] = - point[0]
+            point[0] = -point[0]
         if y:
-            point[1] = - point[1]
+            point[1] = -point[1]
         if z:
-            point[2] = - point[2]
+            point[2] = -point[2]
 
     elif point.dim() == 2:
         if x:
-            point[:, 0] = - point[:, 0]
+            point[:, 0] = -point[:, 0]
         if y:
-            point[:, 1] = - point[:, 1]
+            point[:, 1] = -point[:, 1]
         if z:
-            point[:, 2] = - point[:, 2]
+            point[:, 2] = -point[:, 2]
 
     else:
         raise NotImplementedError
@@ -396,9 +411,9 @@ def get_min_l2_dist(list1, list2, center1, center2, quat1, quat2):
 
 def get_contact_point_loss(center, quat, contact_points, sym_info):
     """
-        Contact point loss metric
-        Input: B x P x 3, B x P x 4, B x P x P x 4, B x P x 3
-        Ouput: B
+    Contact point loss metric
+    Input: B x P x 3, B x P x 4, B x P x P x 4, B x P x 3
+    Ouput: B
     """
     batch_size, num_part, _ = center.size()
     contact_point_loss = center.new_zeros(batch_size)
@@ -436,9 +451,9 @@ def get_contact_point_loss(center, quat, contact_points, sym_info):
 
 def get_contact_point_loss_for_single_part(center, quat, contact_points, sym_info, part_mask):
     """
-        Contact point loss metric
-        Input: B x P x 3, B x P x 4, B x P x P x 4, B x P x 3
-        Ouput: B
+    Contact point loss metric
+    Input: B x P x 3, B x P x 4, B x P x P x 4, B x P x 3
+    Ouput: B
     """
     batch_size, num_part, _ = center.size()
     contact_point_loss = center.new_zeros(batch_size)
@@ -457,7 +472,9 @@ def get_contact_point_loss_for_single_part(center, quat, contact_points, sym_inf
         contact_4 = contact.unsqueeze(-1).repeat(1, 4)
 
         contact_point_1 = cur_contact_point[pos_id][contact_4].view(-1, 4).contiguous()[:, 1:]
-        contact_point_2 = cur_contact_point.transpose(0, 1).contiguous()[pos_id][contact_4].view(-1, 4).contiguous()[:, 1:]
+        contact_point_2 = (
+            cur_contact_point.transpose(0, 1).contiguous()[pos_id][contact_4].view(-1, 4).contiguous()[:, 1:]
+        )
 
         point_list_1 = center.new_tensor(get_possible_point_list(contact_point_1)).transpose(0, 1).contiguous()
         point_list_2 = center.new_tensor(get_possible_point_list(contact_point_2)).transpose(0, 1).contiguous()

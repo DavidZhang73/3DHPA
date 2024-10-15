@@ -1,14 +1,13 @@
-from __future__ import absolute_import, division, print_function # Add compatibility for Python 2.7+
-
-from math import sqrt, pi, sin, cos, asin, acos, atan2, exp, log
 from copy import deepcopy
-import numpy as np # Numpy is required for many vector operations
+from math import acos, atan2, cos, exp, log, pi, sin, sqrt
+
+import numpy as np  # Numpy is required for many vector operations
 
 
 class Quaternion:
     def __init__(self, *args, **kwargs):
         s = len(args)
-        if s is 0:
+        if s == 0:
             # No positional arguments supplied
             if len(kwargs) > 0:
                 # Keyword arguments provided
@@ -41,7 +40,9 @@ class Quaternion:
                         raise ValueError(
                             "A valid rotation 'axis' parameter must be provided to describe a meaningful rotation."
                         )
-                    angle = kwargs.get('radians') or self.to_radians(kwargs.get('degrees')) or kwargs.get('angle') or 0.0
+                    angle = (
+                        kwargs.get("radians") or self.to_radians(kwargs.get("degrees")) or kwargs.get("angle") or 0.0
+                    )
                     self.q = Quaternion._from_axis_angle(axis, angle).q
                 elif "array" in kwargs:
                     self.q = self._validate_number_sequence(kwargs["array"], 4)
@@ -50,7 +51,7 @@ class Quaternion:
                 else:
                     keys = sorted(kwargs.keys())
                     elements = [kwargs[kw] for kw in keys]
-                    if len(elements) is 1:
+                    if len(elements) == 1:
                         r = float(elements[0])
                         self.q = np.array([r, 0.0, 0.0, 0.0])
                     else:
@@ -59,7 +60,7 @@ class Quaternion:
             else:
                 # Default initialisation
                 self.q = np.array([1.0, 0.0, 0.0, 0.0])
-        elif s is 1:
+        elif s == 1:
             # Single positional argument supplied
             if isinstance(args[0], Quaternion):
                 self.q = args[0].q
@@ -95,13 +96,17 @@ class Quaternion:
             try:
                 l = [float(e) for e in seq]
             except ValueError:
-                raise ValueError("One or more elements in sequence <" + repr(seq) + "> cannot be interpreted as a real number")
+                raise ValueError(
+                    "One or more elements in sequence <" + repr(seq) + "> cannot be interpreted as a real number"
+                )
             else:
                 return np.asarray(l)
-        elif len(seq) is 0:
+        elif len(seq) == 0:
             return np.zeros(n)
         else:
-            raise ValueError("Unexpected number of elements in sequence. Got: " + str(len(seq)) + ", Expected: " + str(n) + ".")
+            raise ValueError(
+                "Unexpected number of elements in sequence. Got: " + str(len(seq)) + ", Expected: " + str(n) + "."
+            )
 
     # Initialise from matrix
     @classmethod
@@ -119,8 +124,8 @@ class Quaternion:
 
         if shape == (3, 3):
             R = matrix
-        elif shape == (4,4):
-            R = matrix[:-1][:,:-1] # Upper left 3x3 sub-matrix
+        elif shape == (4, 4):
+            R = matrix[:-1][:, :-1]  # Upper left 3x3 sub-matrix
         else:
             raise ValueError("Invalid matrix shape: Input must be a 3x3 or 4x4 numpy array or matrix")
 
@@ -132,21 +137,43 @@ class Quaternion:
             raise ValueError("Matrix must be special orthogonal i.e. its determinant must be +1.0")
 
         def decomposition_method(matrix):
-            """ Method supposedly able to deal with non-orthogonal matrices - NON-FUNCTIONAL!
+            """Method supposedly able to deal with non-orthogonal matrices - NON-FUNCTIONAL!
             Based on this method: http://arc.aiaa.org/doi/abs/10.2514/2.4654
             """
-            x, y, z = 0, 1, 2 # indices
-            K = np.array([
-                [R[x, x]-R[y, y]-R[z, z],  R[y, x]+R[x, y],           R[z, x]+R[x, z],           R[y, z]-R[z, y]],
-                [R[y, x]+R[x, y],          R[y, y]-R[x, x]-R[z, z],   R[z, y]+R[y, z],           R[z, x]-R[x, z]],
-                [R[z, x]+R[x, z],          R[z, y]+R[y, z],           R[z, z]-R[x, x]-R[y, y],   R[x, y]-R[y, x]],
-                [R[y, z]-R[z, y],          R[z, x]-R[x, z],           R[x, y]-R[y, x],           R[x, x]+R[y, y]+R[z, z]]
-            ])
+            x, y, z = 0, 1, 2  # indices
+            K = np.array(
+                [
+                    [
+                        R[x, x] - R[y, y] - R[z, z],
+                        R[y, x] + R[x, y],
+                        R[z, x] + R[x, z],
+                        R[y, z] - R[z, y],
+                    ],
+                    [
+                        R[y, x] + R[x, y],
+                        R[y, y] - R[x, x] - R[z, z],
+                        R[z, y] + R[y, z],
+                        R[z, x] - R[x, z],
+                    ],
+                    [
+                        R[z, x] + R[x, z],
+                        R[z, y] + R[y, z],
+                        R[z, z] - R[x, x] - R[y, y],
+                        R[x, y] - R[y, x],
+                    ],
+                    [
+                        R[y, z] - R[z, y],
+                        R[z, x] - R[x, z],
+                        R[x, y] - R[y, x],
+                        R[x, x] + R[y, y] + R[z, z],
+                    ],
+                ]
+            )
             K = K / 3.0
 
             e_vals, e_vecs = np.linalg.eig(K)
-            print('Eigenvalues:', e_vals)
-            print('Eigenvectors:', e_vecs)
+            print("Eigenvalues:", e_vals)
+            print("Eigenvectors:", e_vecs)
             max_index = np.argmax(e_vals)
             principal_component = e_vecs[max_index]
             return principal_component
@@ -160,24 +187,24 @@ class Quaternion:
 
             Altered to work with the column vector convention instead of row vectors
             """
-            m = matrix.conj().transpose() # This method assumes row-vector and postmultiplication of that vector
+            m = matrix.conj().transpose()  # This method assumes row-vector and postmultiplication of that vector
             if m[2, 2] < 0:
                 if m[0, 0] > m[1, 1]:
                     t = 1 + m[0, 0] - m[1, 1] - m[2, 2]
-                    q = [m[1, 2]-m[2, 1],  t,  m[0, 1]+m[1, 0],  m[2, 0]+m[0, 2]]
+                    q = [m[1, 2] - m[2, 1], t, m[0, 1] + m[1, 0], m[2, 0] + m[0, 2]]
                 else:
                     t = 1 - m[0, 0] + m[1, 1] - m[2, 2]
-                    q = [m[2, 0]-m[0, 2],  m[0, 1]+m[1, 0],  t,  m[1, 2]+m[2, 1]]
+                    q = [m[2, 0] - m[0, 2], m[0, 1] + m[1, 0], t, m[1, 2] + m[2, 1]]
             else:
                 if m[0, 0] < -m[1, 1]:
                     t = 1 - m[0, 0] - m[1, 1] + m[2, 2]
-                    q = [m[0, 1]-m[1, 0],  m[2, 0]+m[0, 2],  m[1, 2]+m[2, 1],  t]
+                    q = [m[0, 1] - m[1, 0], m[2, 0] + m[0, 2], m[1, 2] + m[2, 1], t]
                 else:
                     t = 1 + m[0, 0] + m[1, 1] + m[2, 2]
-                    q = [t,  m[1, 2]-m[2, 1],  m[2, 0]-m[0, 2],  m[0, 1]-m[1, 0]]
+                    q = [t, m[1, 2] - m[2, 1], m[2, 0] - m[0, 2], m[0, 1] - m[1, 0]]
 
             q = np.array(q)
-            q *= 0.5 / sqrt(t);
+            q *= 0.5 / sqrt(t)
             return q
 
         return cls(array=trace_method(R))
@@ -198,7 +225,7 @@ class Quaternion:
         if mag_sq == 0.0:
             raise ZeroDivisionError("Provided rotation axis has no length")
         # Ensure axis is in unit vector form
-        if (abs(1.0 - mag_sq) > 1e-12):
+        if abs(1.0 - mag_sq) > 1e-12:
             axis = axis / sqrt(mag_sq)
         theta = angle / 2.0
         r = cos(theta)
@@ -217,16 +244,15 @@ class Quaternion:
 
         q1 = sqrt(1.0 - r1) * (sin(2 * pi * r2))
         q2 = sqrt(1.0 - r1) * (cos(2 * pi * r2))
-        q3 = sqrt(r1)       * (sin(2 * pi * r3))
-        q4 = sqrt(r1)       * (cos(2 * pi * r3))
+        q3 = sqrt(r1) * (sin(2 * pi * r3))
+        q4 = sqrt(r1) * (cos(2 * pi * r3))
 
         return cls(q1, q2, q3, q4)
 
     # Representation
     def __str__(self):
-        """An informal, nicely printable string representation of the Quaternion object.
-        """
-        return "{:.3f} {:+.3f}i {:+.3f}j {:+.3f}k".format(self.q[0], self.q[1], self.q[2], self.q[3])
+        """An informal, nicely printable string representation of the Quaternion object."""
+        return f"{self.q[0]:.3f} {self.q[1]:+.3f}i {self.q[2]:+.3f}j {self.q[3]:+.3f}k"
 
     def __repr__(self):
         """The 'official' string representation of the Quaternion object.
@@ -234,7 +260,7 @@ class Quaternion:
         This is a string representation of a valid Python expression that could be used
         to recreate an object with the same value (given an appropriate environment)
         """
-        return "Quaternion({}, {}, {}, {})".format(repr(self.q[0]), repr(self.q[1]), repr(self.q[2]), repr(self.q[3]))
+        return f"Quaternion({repr(self.q[0])}, {repr(self.q[1])}, {repr(self.q[2])}, {repr(self.q[3])})"
 
     def __format__(self, formatstr):
         """Inserts a customisable, nicely printable string representation of the Quaternion object
@@ -242,14 +268,10 @@ class Quaternion:
         The syntax for `format_spec` mirrors that of the built in format specifiers for floating point types.
         Check out the official Python [format specification mini-language](https://docs.python.org/3.4/library/string.html#formatspec) for details.
         """
-        if formatstr.strip() == '': # Defualt behaviour mirrors self.__str__()
-            formatstr = '+.3f'
+        if formatstr.strip() == "":  # Defualt behaviour mirrors self.__str__()
+            formatstr = "+.3f"
 
-        string = \
-            "{:" + formatstr +"} "  + \
-            "{:" + formatstr +"}i " + \
-            "{:" + formatstr +"}j " + \
-            "{:" + formatstr +"}k"
+        string = "{:" + formatstr + "} " + "{:" + formatstr + "}i " + "{:" + formatstr + "}j " + "{:" + formatstr + "}k"
         return string.format(self.q[0], self.q[1], self.q[2], self.q[3])
 
     # Type Conversion
@@ -287,7 +309,7 @@ class Quaternion:
         return not (self == Quaternion(0.0))
 
     def __invert__(self):
-        return (self == Quaternion(0.0))
+        return self == Quaternion(0.0)
 
     # Comparison
     def __eq__(self, other):
@@ -300,13 +322,15 @@ class Quaternion:
             try:
                 isEqual = np.allclose(self.q, other.q, rtol=r_tol, atol=a_tol)
             except AttributeError:
-                raise AttributeError("Error in internal quaternion representation means it cannot be compared like a numpy array.")
+                raise AttributeError(
+                    "Error in internal quaternion representation means it cannot be compared like a numpy array."
+                )
             return isEqual
         return self.__eq__(self.__class__(other))
 
     # Negation
     def __neg__(self):
-        return self.__class__(array= -self.q)
+        return self.__class__(array=-self.q)
 
     # Addition
     def __add__(self, other):
@@ -368,19 +392,19 @@ class Quaternion:
     # Exponentiation
     def __pow__(self, exponent):
         # source: https://en.wikipedia.org/wiki/Quaternion#Exponential.2C_logarithm.2C_and_power
-        exponent = float(exponent) # Explicitly reject non-real exponents
+        exponent = float(exponent)  # Explicitly reject non-real exponents
         norm = self.norm
         if norm > 0.0:
             try:
                 n, theta = self.polar_decomposition
             except ZeroDivisionError:
                 # quaternion is a real number (no vector or imaginary part)
-                return Quaternion(scalar=self.scalar ** exponent)
-            return (self.norm ** exponent) * Quaternion(scalar=cos(exponent * theta), vector=(n * sin(exponent * theta)))
+                return Quaternion(scalar=self.scalar**exponent)
+            return (self.norm**exponent) * Quaternion(scalar=cos(exponent * theta), vector=(n * sin(exponent * theta)))
         return Quaternion(self)
 
     def __ipow__(self, other):
-        return self ** other
+        return self**other
 
     def __rpow__(self, other):
         return other ** float(self)
@@ -401,7 +425,7 @@ class Quaternion:
         Returns:
             A new Quaternion object clone with its vector part negated
         """
-        return self.__class__(scalar=self.scalar, vector= -self.vector)
+        return self.__class__(scalar=self.scalar, vector=-self.vector)
 
     @property
     def inverse(self):
@@ -452,12 +476,14 @@ class Quaternion:
         """
         if not self.is_unit():
             mag_squared = np.dot(self.q, self.q)
-            if (mag_squared == 0):
+            if mag_squared == 0:
                 return
-            if (abs(1.0 - mag_squared) < 2.107342e-08):
-                mag =  ((1.0 + mag_squared) / 2.0) # More efficient. Pade approximation valid if error is small
+            if abs(1.0 - mag_squared) < 2.107342e-08:
+                mag = (1.0 + mag_squared) / 2.0  # More efficient. Pade approximation valid if error is small
             else:
-                mag =  sqrt(mag_squared) # Error is too big, take the performance hit to calculate the square root properly
+                mag = sqrt(
+                    mag_squared
+                )  # Error is too big, take the performance hit to calculate the square root properly
 
             self.q = self.q / mag
 
@@ -478,12 +504,12 @@ class Quaternion:
     def polar_unit_vector(self):
         vector_length = np.linalg.norm(self.vector)
         if vector_length <= 0.0:
-            raise ZeroDivisionError('Quaternion is pure real and does not have a unique unit vector')
+            raise ZeroDivisionError("Quaternion is pure real and does not have a unique unit vector")
         return self.vector / vector_length
 
     @property
     def polar_angle(self):
-         return acos(self.scalar / self.norm)
+        return acos(self.scalar / self.norm)
 
     @property
     def polar_decomposition(self):
@@ -509,25 +535,31 @@ class Quaternion:
         Returns:
             `True` if the Quaternion object is of unit length to within the specified tolerance value. `False` otherwise.
         """
-        return abs(1.0 - self._sum_of_squares()) < tolerance # if _sum_of_squares is 1, norm is 1. This saves a call to sqrt()
+        return (
+            abs(1.0 - self._sum_of_squares()) < tolerance
+        )  # if _sum_of_squares is 1, norm is 1. This saves a call to sqrt()
 
     def _q_matrix(self):
-        """Matrix representation of quaternion for multiplication purposes.
-        """
-        return np.array([
-            [self.q[0], -self.q[1], -self.q[2], -self.q[3]],
-            [self.q[1],  self.q[0], -self.q[3],  self.q[2]],
-            [self.q[2],  self.q[3],  self.q[0], -self.q[1]],
-            [self.q[3], -self.q[2],  self.q[1],  self.q[0]]])
+        """Matrix representation of quaternion for multiplication purposes."""
+        return np.array(
+            [
+                [self.q[0], -self.q[1], -self.q[2], -self.q[3]],
+                [self.q[1], self.q[0], -self.q[3], self.q[2]],
+                [self.q[2], self.q[3], self.q[0], -self.q[1]],
+                [self.q[3], -self.q[2], self.q[1], self.q[0]],
+            ]
+        )
 
     def _q_bar_matrix(self):
-        """Matrix representation of quaternion for multiplication purposes.
-        """
-        return np.array([
-            [self.q[0], -self.q[1], -self.q[2], -self.q[3]],
-            [self.q[1],  self.q[0],  self.q[3], -self.q[2]],
-            [self.q[2], -self.q[3],  self.q[0],  self.q[1]],
-            [self.q[3],  self.q[2], -self.q[1],  self.q[0]]])
+        """Matrix representation of quaternion for multiplication purposes."""
+        return np.array(
+            [
+                [self.q[0], -self.q[1], -self.q[2], -self.q[3]],
+                [self.q[1], self.q[0], self.q[3], -self.q[2]],
+                [self.q[2], -self.q[3], self.q[0], self.q[1]],
+                [self.q[3], self.q[2], -self.q[1], self.q[0]],
+            ]
+        )
 
     def _rotate_quaternion(self, q):
         """Rotate a quaternion vector using the stored rotation.
@@ -592,7 +624,7 @@ class Quaternion:
         if v_norm > tolerance:
             vec = vec / v_norm
         magnitude = exp(q.scalar)
-        return Quaternion(scalar = magnitude * cos(v_norm), vector = magnitude * sin(v_norm) * vec)
+        return Quaternion(scalar=magnitude * cos(v_norm), vector=magnitude * sin(v_norm) * vec)
 
     @classmethod
     def log(cls, q):
@@ -614,12 +646,12 @@ class Quaternion:
         tolerance = 1e-17
         if q_norm < tolerance:
             # 0 quaternion - undefined
-            return Quaternion(scalar=-float('inf'), vector=float('nan')*q.vector)
+            return Quaternion(scalar=-float("inf"), vector=float("nan") * q.vector)
         if v_norm < tolerance:
             # real quaternions - no imaginary part
-            return Quaternion(scalar=log(q_norm), vector=[0,0,0])
+            return Quaternion(scalar=log(q_norm), vector=[0, 0, 0])
         vec = q.vector / v_norm
-        return Quaternion(scalar=log(q_norm), vector=acos(q.scalar/q_norm)*vec)
+        return Quaternion(scalar=log(q_norm), vector=acos(q.scalar / q_norm) * vec)
 
     @classmethod
     def exp_map(cls, q, eta):
@@ -662,7 +694,7 @@ class Quaternion:
             The symmetrized exponential formulation is akin to the exponential
             formulation for symmetric positive definite tensors [Source](http://www.academia.edu/7656761/On_the_Averaging_of_Symmetric_Positive-Definite_Tensors)
         """
-        sqrt_q = q ** 0.5
+        sqrt_q = q**0.5
         return sqrt_q * Quaternion.exp(eta) * sqrt_q
 
     @classmethod
@@ -699,7 +731,7 @@ class Quaternion:
         Note:
             Information on the symmetrized formulations given in [Source](https://www.researchgate.net/publication/267191489_Riemannian_L_p_Averaging_on_Lie_Group_of_Nonzero_Quaternions).
         """
-        inv_sqrt_q = (q ** (-0.5))
+        inv_sqrt_q = q ** (-0.5)
         return Quaternion.log(inv_sqrt_q * p * inv_sqrt_q)
 
     @classmethod
@@ -722,10 +754,10 @@ class Quaternion:
            It is thus a good indicator for rotation similarities.
         """
         q0_minus_q1 = q0 - q1
-        q0_plus_q1  = q0 + q1
+        q0_plus_q1 = q0 + q1
         d_minus = q0_minus_q1.norm
-        d_plus  = q0_plus_q1.norm
-        if (d_minus < d_plus):
+        d_plus = q0_plus_q1.norm
+        if d_minus < d_plus:
             return d_minus
         else:
             return d_plus
@@ -812,20 +844,20 @@ class Quaternion:
         # If the dot product is negative, slerp won't take the shorter path.
         # Note that v1 and -v1 are equivalent when the negation is applied to all four components.
         # Fix by reversing one quaternion
-        if (dot < 0.0):
+        if dot < 0.0:
             q0.q = -q0.q
             dot = -dot
 
         # sin_theta_0 can not be zero
-        if (dot > 0.9995):
-            qr = Quaternion(q0.q + amount*(q1.q - q0.q))
+        if dot > 0.9995:
+            qr = Quaternion(q0.q + amount * (q1.q - q0.q))
             qr._fast_normalise()
             return qr
 
         theta_0 = np.arccos(dot)  # Since dot is in range [0, 0.9995], np.arccos() is safe
         sin_theta_0 = np.sin(theta_0)
 
-        theta = theta_0*amount
+        theta = theta_0 * amount
         sin_theta = np.sin(theta)
 
         s0 = np.cos(theta) - dot * sin_theta / sin_theta_0
@@ -910,7 +942,6 @@ class Quaternion:
             self.q = (self * q2).q
             self._fast_normalise()
 
-
     @property
     def rotation_matrix(self):
         """Get the 3x3 rotation matrix equivalent of the quaternion rotation.
@@ -924,7 +955,7 @@ class Quaternion:
         """
         self._normalise()
         product_matrix = np.dot(self._q_matrix(), self._q_bar_matrix().conj().transpose())
-        return product_matrix[1:][:,1:]
+        return product_matrix[1:][:, 1:]
 
     @property
     def transformation_matrix(self):
@@ -956,11 +987,15 @@ class Quaternion:
         """
 
         self._normalise()
-        yaw = np.arctan2(2*(self.q[0]*self.q[3] - self.q[1]*self.q[2]),
-            1 - 2*(self.q[2]**2 + self.q[3]**2))
-        pitch = np.arcsin(2*(self.q[0]*self.q[2] + self.q[3]*self.q[1]))
-        roll = np.arctan2(2*(self.q[0]*self.q[1] - self.q[2]*self.q[3]),
-            1 - 2*(self.q[1]**2 + self.q[2]**2))
+        yaw = np.arctan2(
+            2 * (self.q[0] * self.q[3] - self.q[1] * self.q[2]),
+            1 - 2 * (self.q[2] ** 2 + self.q[3] ** 2),
+        )
+        pitch = np.arcsin(2 * (self.q[0] * self.q[2] + self.q[3] * self.q[1]))
+        roll = np.arctan2(
+            2 * (self.q[0] * self.q[1] - self.q[2] * self.q[3]),
+            1 - 2 * (self.q[1] ** 2 + self.q[2] ** 2),
+        )
 
         return yaw, pitch, roll
 
@@ -969,8 +1004,9 @@ class Quaternion:
 
         Odd multiples of pi are wrapped to +pi (as opposed to -pi)
         """
-        result = ((theta + pi) % (2*pi)) - pi
-        if result == -pi: result = pi
+        result = ((theta + pi) % (2 * pi)) - pi
+        if result == -pi:
+            result = pi
         return result
 
     def get_axis(self, undefined=np.zeros(3)):
@@ -1027,7 +1063,7 @@ class Quaternion:
         """
         self._normalise()
         norm = np.linalg.norm(self.vector)
-        return self._wrap_angle(2.0 * atan2(norm,self.scalar))
+        return self._wrap_angle(2.0 * atan2(norm, self.scalar))
 
     @property
     def degrees(self):
@@ -1039,7 +1075,7 @@ class Quaternion:
 
     @property
     def scalar(self):
-        """ Return the real or scalar component of the quaternion object.
+        """Return the real or scalar component of the quaternion object.
 
         Returns:
             A real number i.e. float
@@ -1048,7 +1084,7 @@ class Quaternion:
 
     @property
     def vector(self):
-        """ Return the imaginary or vector component of the quaternion object.
+        """Return the imaginary or vector component of the quaternion object.
 
         Returns:
             A numpy 3-array of floats. NOT guaranteed to be a unit vector
@@ -1081,7 +1117,7 @@ class Quaternion:
 
     @property
     def elements(self):
-        """ Return all the elements of the quaternion object.
+        """Return all the elements of the quaternion object.
 
         Returns:
             A numpy 4-array of floats. NOT guaranteed to be a unit vector
