@@ -69,11 +69,11 @@ class PartNetPartDataset(data.Dataset):
     def __getitem__(self, index):
         shape_id = self.data[index]
 
-        cur_data_fn = os.path.join(self.data_dir, "shape_data/%s_level" % shape_id + self.level + ".npy")
+        cur_data_fn = os.path.join(self.data_dir, f"shape_data/{shape_id}_level" + self.level + ".npy")
         cur_data = np.load(cur_data_fn, allow_pickle=True).item()  # assume data is stored in separate .npz file.
         cur_contact_data_fn = os.path.join(
             self.data_dir,
-            "contact_points/pairs_with_contact_points_%s_level" % shape_id + self.level + ".npy",
+            f"contact_points/pairs_with_contact_points_{shape_id}_level" + self.level + ".npy",
         )
         cur_contacts = np.load(cur_contact_data_fn, allow_pickle=True)  # P x P x 4
 
@@ -187,7 +187,7 @@ class PartNetPartDataset(data.Dataset):
                 data_feats = data_feats + (out,)
 
             else:
-                raise ValueError("ERROR: unknown feat type %s!" % feat)
+                raise ValueError(f"ERROR: unknown feat type {feat}!")
 
         data_feats = data_feats + (torch.tensor([num_part, num_sup_part]),)
         # return data_feats, torch.tensor([[num_part, num_sup_part]])

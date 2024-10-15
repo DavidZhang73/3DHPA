@@ -504,7 +504,7 @@ def main():
         collate_fn=z_utils.collate_feats_with_none,
     )
 
-    test_loader = torch.utils.data.DataLoader(
+    torch.utils.data.DataLoader(
         test_dataset,
         batch_size=args.eval_batch_size,
         shuffle=False,

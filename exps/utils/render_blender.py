@@ -69,7 +69,7 @@ def camPosToQuaternion(cx, cy, cz):
     roll = math.acos(tmp)
     if cz < 0:
         roll = -roll
-    print("%f %f %f" % (yaw, pitch, roll))
+    print(f"{yaw:f} {pitch:f} {roll:f}")
     q2a, q2b, q2c, q2d = quaternionFromYawPitchRoll(yaw, pitch, roll)
     q1 = q1a * q2a - q1b * q2b - q1c * q2c - q1d * q2d
     q2 = q1b * q2a + q1a * q2b + q1d * q2c - q1c * q2d

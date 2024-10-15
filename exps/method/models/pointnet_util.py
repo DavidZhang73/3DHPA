@@ -138,7 +138,7 @@ def sample_and_group_all(xyz, points):
 
 class PointNetSetAbstraction(nn.Module):
     def __init__(self, npoint, radius, nsample, in_channel, mlp, group_all, knn=False):
-        super(PointNetSetAbstraction, self).__init__()
+        super().__init__()
         self.npoint = npoint
         self.radius = radius
         self.nsample = nsample
@@ -176,7 +176,7 @@ class PointNetSetAbstraction(nn.Module):
 
 class PointNetSetAbstractionMsg(nn.Module):
     def __init__(self, npoint, radius_list, nsample_list, in_channel, mlp_list, knn=False):
-        super(PointNetSetAbstractionMsg, self).__init__()
+        super().__init__()
         self.npoint = npoint
         self.radius_list = radius_list
         self.nsample_list = nsample_list
@@ -238,7 +238,7 @@ class PointNetSetAbstractionMsg(nn.Module):
 # NoteL this function swaps N and C
 class PointNetFeaturePropagation(nn.Module):
     def __init__(self, in_channel, mlp):
-        super(PointNetFeaturePropagation, self).__init__()
+        super().__init__()
         self.mlp_convs = nn.ModuleList()
         self.mlp_bns = nn.ModuleList()
         last_channel = in_channel

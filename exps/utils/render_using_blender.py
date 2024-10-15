@@ -29,13 +29,13 @@ def render_pts(out_fn, pts, blender_fn="blank.blend"):
     with open(out_fn + ".obj", "w") as fout:
         fout.write("mtllib %s\n" % (out_fn.split("/")[-1] + ".mtl"))
         for i in range(all_v.shape[0]):
-            fout.write("v %f %f %f\n" % (all_v[i, 0], all_v[i, 1], all_v[i, 2]))
+            fout.write(f"v {all_v[i, 0]:f} {all_v[i, 1]:f} {all_v[i, 2]:f}\n")
         fout.write("usemtl f0\n")
         for i in range(all_f.shape[0]):
             fout.write("f %d %d %d\n" % (all_f[i, 0], all_f[i, 1], all_f[i, 2]))
     with open(out_fn + ".mtl", "w") as fout:
         fout.write("newmtl f0\nKd 1 0 0\n")
-    cmd = "cd %s && blender -noaudio --background %s --python render_blender.py %s %s > /dev/null" % (
+    cmd = "cd {} && blender -noaudio --background {} --python render_blender.py {} {} > /dev/null".format(
         os.path.join(os.path.dirname(os.path.abspath(__file__))),
         blender_fn,
         out_fn + ".obj",
@@ -64,14 +64,14 @@ def render_part_pts(out_fn, pts, blender_fn="blank.blend"):
         all_v = np.vstack(all_v)
         all_f = np.vstack(all_f)
         for i in range(all_v.shape[0]):
-            fobj.write("v %f %f %f\n" % (all_v[i, 0], all_v[i, 1], all_v[i, 2]))
+            fobj.write(f"v {all_v[i, 0]:f} {all_v[i, 1]:f} {all_v[i, 2]:f}\n")
         fobj.write("usemtl f%d\n" % pid)
         for i in range(all_f.shape[0]):
             fobj.write("f %d %d %d\n" % (all_f[i, 0], all_f[i, 1], all_f[i, 2]))
         fmtl.write("newmtl f%d\nKd %f %f %f\n" % (pid, colors[pid][0], colors[pid][1], colors[pid][2]))
     fobj.close()
     fmtl.close()
-    cmd = "cd %s && blender -noaudio --background %s --python render_blender.py %s %s > /dev/null" % (
+    cmd = "cd {} && blender -noaudio --background {} --python render_blender.py {} {} > /dev/null".format(
         os.path.join(os.path.dirname(os.path.abspath(__file__))),
         blender_fn,
         out_fn + ".obj",
@@ -95,7 +95,7 @@ def render_part_pts_connect_points(out_fn, pts, select_pair_index, blender_fn="b
         all_v = np.vstack(all_v)
         all_f = np.vstack(all_f)
         for i in range(all_v.shape[0]):
-            fobj.write("v %f %f %f\n" % (all_v[i, 0], all_v[i, 1], all_v[i, 2]))
+            fobj.write(f"v {all_v[i, 0]:f} {all_v[i, 1]:f} {all_v[i, 2]:f}\n")
         fobj.write("usemtl f%d\n" % pid)
         for i in range(all_f.shape[0]):
             fobj.write("f %d %d %d\n" % (all_f[i, 0], all_f[i, 1], all_f[i, 2]))
@@ -108,7 +108,7 @@ def render_part_pts_connect_points(out_fn, pts, select_pair_index, blender_fn="b
         )
     fobj.close()
     fmtl.close()
-    cmd = "cd %s && blender -noaudio --background %s --python render_blender.py %s %s > /dev/null" % (
+    cmd = "cd {} && blender -noaudio --background {} --python render_blender.py {} {} > /dev/null".format(
         os.path.join(os.path.dirname(os.path.abspath(__file__))),
         blender_fn,
         out_fn + ".obj",

@@ -13,7 +13,7 @@ LEVEL=3
 # Training.
 LR=7.5e-5
 WEIGHT_DECAY=1e-4
-BATCH_SIZE=64   
+BATCH_SIZE=64
 EPOCHS=1000
 LR_DROP=100
 NUM_GUPS=8
@@ -46,7 +46,7 @@ COEF_PART_CD=0.0
 #### Fixed above.
 # Model.
 MODEL=baseline2_trans
-MODEL_VERSION=original      
+MODEL_VERSION=original
 BIPN=0
 PRE_NORM=0
 OA=0

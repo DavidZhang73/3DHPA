@@ -8,7 +8,7 @@ from pointnet_utils import STN3d, STNkd, feature_transform_reguliarzer
 
 class get_model(nn.Module):
     def __init__(self, part_num=50, normal_channel=True):
-        super(get_model, self).__init__()
+        super().__init__()
         if normal_channel:
             channel = 6
         else:
@@ -76,7 +76,7 @@ class get_model(nn.Module):
 
 class get_loss(torch.nn.Module):
     def __init__(self, mat_diff_loss_scale=0.001):
-        super(get_loss, self).__init__()
+        super().__init__()
         self.mat_diff_loss_scale = mat_diff_loss_scale
 
     def forward(self, pred, target, trans_feat):

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class selfAttention(nn.Module):
     def __init__(self, num_attention_heads, input_size, hidden_size):
-        super(selfAttention, self).__init__()
+        super().__init__()
         if hidden_size % num_attention_heads != 0:
             raise ValueError(
                 "the hidden size %d is not a multiple of the number of attention heads"

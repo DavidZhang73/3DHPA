@@ -9,7 +9,7 @@ from torch.autograd import Variable
 
 class STN3d(nn.Module):
     def __init__(self, channel):
-        super(STN3d, self).__init__()
+        super().__init__()
         self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 512, 1)
@@ -53,7 +53,7 @@ class STN3d(nn.Module):
 
 class STNkd(nn.Module):
     def __init__(self, k=64):
-        super(STNkd, self).__init__()
+        super().__init__()
         self.conv1 = torch.nn.Conv1d(k, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 512, 1)
@@ -99,7 +99,7 @@ class STNkd(nn.Module):
 
 class PointNetEncoder(nn.Module):
     def __init__(self, global_feat=True, feature_transform=False, channel=3):
-        super(PointNetEncoder, self).__init__()
+        super().__init__()
         self.stn = STN3d(channel)
         self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 256, 1)
@@ -150,7 +150,7 @@ class PointNetEncoder(nn.Module):
 
 class STN3d_sm(nn.Module):
     def __init__(self, channel):
-        super(STN3d_sm, self).__init__()
+        super().__init__()
         self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 256, 1)
@@ -191,7 +191,7 @@ class STN3d_sm(nn.Module):
 
 class STNkd_sm(nn.Module):
     def __init__(self, k=64):
-        super(STNkd_sm, self).__init__()
+        super().__init__()
         self.conv1 = torch.nn.Conv1d(k, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 256, 1)
@@ -234,7 +234,7 @@ class STNkd_sm(nn.Module):
 
 class PointNetEncoder_sm(nn.Module):
     def __init__(self, global_feat=True, feature_transform=False, channel=3):
-        super(PointNetEncoder_sm, self).__init__()
+        super().__init__()
         self.stn = STN3d_sm(channel)
         self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)

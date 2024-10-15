@@ -135,7 +135,7 @@ def load_off(fn):
 
 
 def rotate_pts(pts, theta=0, phi=0):
-    rotated_data = np.zeros(pts.shape, dtype=np.float32)
+    np.zeros(pts.shape, dtype=np.float32)
 
     # rotate along y-z axis
     rotation_angle = phi / 90 * np.pi / 2
@@ -187,7 +187,7 @@ def load_label(fn):
 def export_obj(out, v, f):
     with open(out, "w") as fout:
         for i in range(v.shape[0]):
-            fout.write("v %f %f %f\n" % (v[i, 0], v[i, 1], v[i, 2]))
+            fout.write(f"v {v[i, 0]:f} {v[i, 1]:f} {v[i, 2]:f}\n")
         for i in range(f.shape[0]):
             fout.write("f %d %d %d\n" % (f[i, 0], f[i, 1], f[i, 2]))
 
@@ -201,7 +201,7 @@ def export_label(out, label):
 def export_pts(out, v):
     with open(out, "w") as fout:
         for i in range(v.shape[0]):
-            fout.write("%f %f %f\n" % (v[i, 0], v[i, 1], v[i, 2]))
+            fout.write(f"{v[i, 0]:f} {v[i, 1]:f} {v[i, 2]:f}\n")
 
 
 def export_pts_with_normal(out, v, n):
@@ -209,7 +209,7 @@ def export_pts_with_normal(out, v, n):
 
     with open(out, "w") as fout:
         for i in range(v.shape[0]):
-            fout.write("%f %f %f %f %f %f\n" % (v[i, 0], v[i, 1], v[i, 2], n[i, 0], n[i, 1], n[i, 2]))
+            fout.write(f"{v[i, 0]:f} {v[i, 1]:f} {v[i, 2]:f} {n[i, 0]:f} {n[i, 1]:f} {n[i, 2]:f}\n")
 
 
 def export_ply_with_label(out, v, l):
@@ -252,7 +252,7 @@ def export_ply(out, v):
         fout.write("end_header\n")
 
         for i in range(v.shape[0]):
-            fout.write("%f %f %f\n" % (v[i, 0], v[i, 1], v[i, 2]))
+            fout.write(f"{v[i, 0]:f} {v[i, 1]:f} {v[i, 2]:f}\n")
 
 
 def export_ply_with_normal(out, v, n):
@@ -271,7 +271,7 @@ def export_ply_with_normal(out, v, n):
         fout.write("end_header\n")
 
         for i in range(v.shape[0]):
-            fout.write("%f %f %f %f %f %f\n" % (v[i, 0], v[i, 1], v[i, 2], n[i, 0], n[i, 1], n[i, 2]))
+            fout.write(f"{v[i, 0]:f} {v[i, 1]:f} {v[i, 2]:f} {n[i, 0]:f} {n[i, 1]:f} {n[i, 2]:f}\n")
 
 
 def sample_points_from_obj(label_fn, obj_fn, pts_fn, num_points, verbose=False):
@@ -311,7 +311,7 @@ def sample_points(v, f, label=None, num_points=200, verbose=False):
 
     pts, fid = sample_points_from_obj(tmp_label, tmp_obj, tmp_pts, num_points=num_points, verbose=verbose)
 
-    cmd = "rm -rf %s %s %s" % (tmp_obj, tmp_pts, tmp_label)
+    cmd = f"rm -rf {tmp_obj} {tmp_pts} {tmp_label}"
     call(cmd, shell=True)
 
     return pts, fid
@@ -331,15 +331,7 @@ def export_pts_with_label(out, pc, label, base=0):
         for i in range(num_point):
             cur_color = colors[label[i] % num_colors]
             fout.write(
-                "%f %f %f %f %f %f\n"
-                % (
-                    pc[i, 0],
-                    pc[i, 1],
-                    pc[i, 2],
-                    cur_color[0],
-                    cur_color[1],
-                    cur_color[2],
-                )
+                f"{pc[i, 0]:f} {pc[i, 1]:f} {pc[i, 2]:f} {cur_color[0]:f} {cur_color[1]:f} {cur_color[2]:f}\n"
             )
 
 
@@ -352,7 +344,7 @@ def export_pts_with_keypoints(out, pc, kp_list):
             else:
                 color = [0.0, 0.0, 1.0]
 
-            fout.write("%f %f %f %f %f %f\n" % (pc[i, 0], pc[i, 1], pc[i, 2], color[0], color[1], color[2]))
+            fout.write(f"{pc[i, 0]:f} {pc[i, 1]:f} {pc[i, 2]:f} {color[0]:f} {color[1]:f} {color[2]:f}\n")
 
 
 def compute_boundary_labels(pc, seg, radius=0.05):
@@ -383,19 +375,19 @@ def render_obj(out, v, f, delete_img=False, flat_shading=True):
     export_obj(tmp_obj, v, f)
 
     if flat_shading:
-        cmd = "RenderShape -0 %s %s 600 600 > /dev/null" % (tmp_obj, out)
+        cmd = f"RenderShape -0 {tmp_obj} {out} 600 600 > /dev/null"
     else:
-        cmd = "RenderShape %s %s 600 600 > /dev/null" % (tmp_obj, out)
+        cmd = f"RenderShape {tmp_obj} {out} 600 600 > /dev/null"
 
     call(cmd, shell=True)
 
     img = np.array(Image.open(out), dtype=np.float32)
 
-    cmd = "rm -rf %s" % (tmp_obj)
+    cmd = f"rm -rf {tmp_obj}"
     call(cmd, shell=True)
 
     if delete_img:
-        cmd = "rm -rf %s" % out
+        cmd = f"rm -rf {out}"
         call(cmd, shell=True)
 
     return img
@@ -410,16 +402,16 @@ def render_obj_with_label(out, v, f, label, delete_img=False, base=0):
     export_obj(tmp_obj, v, f)
     export_label(tmp_label, label)
 
-    cmd = "RenderShape %s -l %s %s 600 600 > /dev/null" % (tmp_obj, tmp_label, out)
+    cmd = f"RenderShape {tmp_obj} -l {tmp_label} {out} 600 600 > /dev/null"
     call(cmd, shell=True)
 
     img = np.array(Image.open(out), dtype=np.float32)
 
-    cmd = "rm -rf %s %s" % (tmp_obj, tmp_label)
+    cmd = f"rm -rf {tmp_obj} {tmp_label}"
     call(cmd, shell=True)
 
     if delete_img:
-        cmd = "rm -rf %s" % out
+        cmd = f"rm -rf {out}"
         call(cmd, shell=True)
 
     return img
@@ -512,11 +504,11 @@ def render_pts_with_keypoints(
 
     img = np.array(Image.open(out), dtype=np.float32)
 
-    cmd = "rm -rf %s %s" % (tmp_pts, tmp_label)
+    cmd = f"rm -rf {tmp_pts} {tmp_label}"
     call(cmd, shell=True)
 
     if delete_img:
-        cmd = "rm -rf %s" % out
+        cmd = f"rm -rf {out}"
         call(cmd, shell=True)
 
     return img
@@ -573,7 +565,7 @@ def transfer_label_from_pts_to_obj(vertices, faces, pts, label):
 def detect_connected_component(vertices, faces, face_labels=None):
     edge2facelist = dict()
 
-    num_vertices = vertices.shape[0]
+    vertices.shape[0]
     num_faces = faces.shape[0]
 
     bar = progressbar.ProgressBar()
@@ -624,7 +616,7 @@ def detect_connected_component(vertices, faces, face_labels=None):
                 for key in face_id_list[face_id]:
                     for new_face_id in edge2facelist[key]:
                         if not face_used[new_face_id] and (
-                            face_labels == None or face_labels[new_face_id] == face_labels[face_id]
+                            face_labels is None or face_labels[new_face_id] == face_labels[face_id]
                         ):
                             q.append(new_face_id)
 

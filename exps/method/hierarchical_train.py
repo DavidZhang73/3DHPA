@@ -62,7 +62,7 @@ def train_one_epoch(
 
         # adjust learning rate and momentum coefficient per iteration.
         if args.type_sched == "cosine":
-            lr = adjust_learning_rate(optimizer, epoch + i / iters_per_epoch, args)
+            adjust_learning_rate(optimizer, epoch + i / iters_per_epoch, args)
         learning_rates.update(optimizer.param_groups[0]["lr"])
 
         # data pre-process.

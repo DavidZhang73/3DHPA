@@ -11,7 +11,7 @@ from .pointnet.pointnet_cls import trans_loss
 
 class hierarchical_trans(nn.Module):
     def __init__(self, args):
-        super(hierarchical_trans, self).__init__()
+        super().__init__()
         self.args = args
 
         if args.backbone == "pointnet_cls":
@@ -47,7 +47,6 @@ class hierarchical_trans(nn.Module):
             base_feat2 = base_feat2.view(batch_size, num_part, -1)
             trans_loss += self.trans_criterion(trans_feat2)
 
-        output = dict()
         kwargs = {"part_ids": part_ids}
 
         base_contact_points = contact_points

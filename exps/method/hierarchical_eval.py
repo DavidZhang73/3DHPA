@@ -43,7 +43,7 @@ def eval_func(val_loader, model, log_writer, args):
     model.eval()
 
     end = time.time()
-    val_num_batch = len(val_loader)
+    len(val_loader)
 
     sum_cdsV1_sum = 0.0
     sum_cdsV2_sum = 0.0
@@ -170,7 +170,7 @@ def eval_func(val_loader, model, log_writer, args):
             batch_size,
         )
         if i % args.print_freq == 0:
-            infos = progress.display(i)
+            progress.display(i)
 
     # compute results.
     res_shape_cd = sum_shape_cd_loss / num_ins

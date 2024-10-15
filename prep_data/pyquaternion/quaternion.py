@@ -1,11 +1,62 @@
+"""
+This file is part of the pyquaternion python module
+
+Author:         Kieran Wynn
+Website:        https://github.com/KieranWynn/pyquaternion
+Documentation:  http://kieranwynn.github.io/pyquaternion/
+
+Version:         1.0.0
+License:         The MIT License (MIT)
+
+Copyright (c) 2015 Kieran Wynn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+quaternion.py - This file defines the core Quaternion class
+
+"""
+
 from copy import deepcopy
-from math import acos, atan2, cos, exp, log, pi, sin, sqrt
+from math import acos, asin, atan2, cos, exp, log, pi, sin, sqrt
 
 import numpy as np  # Numpy is required for many vector operations
 
 
 class Quaternion:
+    """Class to represent a 4-dimensional complex number or quaternion.
+
+    Quaternion objects can be used generically as 4D numbers,
+    or as unit quaternions to represent rotations in 3D space.
+
+    Attributes:
+        q: Quaternion 4-vector represented as a Numpy array
+
+    """
+
     def __init__(self, *args, **kwargs):
+        """Initialise a new Quaternion object.
+
+        See Object Initialisation docs for complete behaviour:
+
+        http://kieranwynn.github.io/pyquaternion/initialisation/
+
+        """
         s = len(args)
         if s == 0:
             # No positional arguments supplied
@@ -143,30 +194,10 @@ class Quaternion:
             x, y, z = 0, 1, 2  # indices
             K = np.array(
                 [
-                    [
-                        R[x, x] - R[y, y] - R[z, z],
-                        R[y, x] + R[x, y],
-                        R[z, x] + R[x, z],
-                        R[y, z] - R[z, y],
-                    ],
-                    [
-                        R[y, x] + R[x, y],
-                        R[y, y] - R[x, x] - R[z, z],
-                        R[z, y] + R[y, z],
-                        R[z, x] - R[x, z],
-                    ],
-                    [
-                        R[z, x] + R[x, z],
-                        R[z, y] + R[y, z],
-                        R[z, z] - R[x, x] - R[y, y],
-                        R[x, y] - R[y, x],
-                    ],
-                    [
-                        R[y, z] - R[z, y],
-                        R[z, x] - R[x, z],
-                        R[x, y] - R[y, x],
-                        R[x, x] + R[y, y] + R[z, z],
-                    ],
+                    [R[x, x] - R[y, y] - R[z, z], R[y, x] + R[x, y], R[z, x] + R[x, z], R[y, z] - R[z, y]],
+                    [R[y, x] + R[x, y], R[y, y] - R[x, x] - R[z, z], R[z, y] + R[y, z], R[z, x] - R[x, z]],
+                    [R[z, x] + R[x, z], R[z, y] + R[y, z], R[z, z] - R[x, x] - R[y, y], R[x, y] - R[y, x]],
+                    [R[y, z] - R[z, y], R[z, x] - R[x, z], R[x, y] - R[y, x], R[x, x] + R[y, y] + R[z, z]],
                 ]
             )
             K = K / 3.0
@@ -987,14 +1018,10 @@ class Quaternion:
         """
 
         self._normalise()
-        yaw = np.arctan2(
-            2 * (self.q[0] * self.q[3] - self.q[1] * self.q[2]),
-            1 - 2 * (self.q[2] ** 2 + self.q[3] ** 2),
-        )
+        yaw = np.arctan2(2 * (self.q[0] * self.q[3] - self.q[1] * self.q[2]), 1 - 2 * (self.q[2] ** 2 + self.q[3] ** 2))
         pitch = np.arcsin(2 * (self.q[0] * self.q[2] + self.q[3] * self.q[1]))
         roll = np.arctan2(
-            2 * (self.q[0] * self.q[1] - self.q[2] * self.q[3]),
-            1 - 2 * (self.q[1] ** 2 + self.q[2] ** 2),
+            2 * (self.q[0] * self.q[1] - self.q[2] * self.q[3]), 1 - 2 * (self.q[1] ** 2 + self.q[2] ** 2)
         )
 
         return yaw, pitch, roll

@@ -430,7 +430,7 @@ def get_contact_point_loss(center, quat, contact_points, sym_info):
         contact_point_1 = cur_contact_point.view(-1, 4)[contact_1][:, 1:]
         contact_point_2 = cur_contact_point.transpose(0, 1).contiguous().view(-1, 4)[contact_2][:, 1:]
 
-        cur_sym = sym_info[bs_ind]  # ignore actually.
+        sym_info[bs_ind]  # ignore actually.
         point_list_1 = center.new_tensor(get_possible_point_list(contact_point_1)).transpose(0, 1).contiguous()
         point_list_2 = center.new_tensor(get_possible_point_list(contact_point_2)).transpose(0, 1).contiguous()
 

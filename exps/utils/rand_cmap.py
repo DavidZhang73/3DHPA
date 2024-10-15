@@ -75,7 +75,7 @@ def rand_cmap(nlabels, type="bright", first_color_black=True, last_color_black=F
         bounds = np.linspace(0, nlabels, nlabels + 1)
         norm = colors.BoundaryNorm(bounds, nlabels)
 
-        cb = colorbar.ColorbarBase(
+        colorbar.ColorbarBase(
             ax,
             cmap=random_colormap,
             norm=norm,

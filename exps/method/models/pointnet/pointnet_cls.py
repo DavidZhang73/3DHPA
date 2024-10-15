@@ -11,7 +11,7 @@ from .pointnet_utils import (
 
 class get_model(nn.Module):
     def __init__(self, k=40, normal_channel=True, softmax_on=False):
-        super(get_model, self).__init__()
+        super().__init__()
         if normal_channel:
             channel = 6
         else:
@@ -38,7 +38,7 @@ class get_model(nn.Module):
 
 class get_model_sm(nn.Module):
     def __init__(self, k=40, normal_channel=True, softmax_on=False):
-        super(get_model_sm, self).__init__()
+        super().__init__()
         if normal_channel:
             channel = 6
         else:
@@ -57,7 +57,7 @@ class get_model_sm(nn.Module):
 
 class get_loss(torch.nn.Module):
     def __init__(self, mat_diff_loss_scale=0.001):
-        super(get_loss, self).__init__()
+        super().__init__()
         self.mat_diff_loss_scale = mat_diff_loss_scale
 
     def forward(self, pred, target, trans_feat):
@@ -70,7 +70,7 @@ class get_loss(torch.nn.Module):
 
 class trans_loss(torch.nn.Module):
     def __init__(self, mat_diff_loss_scale=0.001):
-        super(trans_loss, self).__init__()
+        super().__init__()
         self.mat_diff_loss_scale = mat_diff_loss_scale
 
     def forward(self, trans_feat):

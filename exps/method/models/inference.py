@@ -88,7 +88,7 @@ def infer_execute(
     gt_trans = gt_poses[:, :, :3]
     gt_rot = gt_poses[:, :, 3:]
     trans_l2_loss_per_trans = get_trans_l2_loss(pred_trans, gt_trans, part_valids, mse_weight)  # B
-    rot_l2_loss_per_trans = get_rot_l2_loss(part_pcs, pred_rot, gt_rot, part_valids)
+    get_rot_l2_loss(part_pcs, pred_rot, gt_rot, part_valids)
     rot_cd_loss_per_trans = get_rot_cd_loss(part_pcs, pred_rot, gt_rot, part_valids)
     shape_cd_loss_per_trans = get_shape_cd_loss_default(part_pcs, pred_rot, gt_rot, pred_trans, gt_trans, part_valids)
     total_cd_loss_per_trans, acc = get_total_cd_loss(part_pcs, pred_rot, gt_rot, pred_trans, gt_trans, part_valids)

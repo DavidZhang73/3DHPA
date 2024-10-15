@@ -5,8 +5,7 @@ import os
 import ipdb
 import numpy as np
 import torch
-
-from exps.utils.quaternion import qrot
+from quaternion import qrot
 
 
 def cal_distance(a, b):  # pts1: N x 3, pts2: N x 3
@@ -58,30 +57,19 @@ def find_pts_ind(part_pts, point):
 
 
 if __name__ == "__main__":
-    root = "../data/partnet_dataset/"
-    root_to_save = "../prepare_partnet/"
+    root = "../data/partnet_dataset/stats/"
+    root_to_save = "../prepare_data/"
     cat_name = "StorageFurniture"
     modes = ["val", "train", "test"]
     levels = [3, 2, 1]
     for level in levels:
         for mode in modes:
-            object_json = json.load(open(root + "stats/train_val_test_split/" + cat_name + "." + mode + ".json"))
+            object_json = json.load(open(root + "train_val_test_split/" + cat_name + "." + mode + ".json"))
             object_list = [int(object_json[i]["anno_id"]) for i in range(len(object_json))]
             idx = 0
             for id in object_list:
                 idx += 1
-                print(
-                    "level",
-                    level,
-                    " ",
-                    mode,
-                    " ",
-                    id,
-                    "      ",
-                    idx,
-                    "/",
-                    len(object_list),
-                )
+                print("level", level, " ", mode, " ", id, "      ", idx, "/", len(object_list))
                 # if os.path.isfile(root + "contact_points/" + 'pairs_with_contact_points_%s_level' % id + str(level) + '.npy'):
                 if True:
                     cur_data_fn = os.path.join(root, "%s_level" % id + str(level) + ".npy")
@@ -116,7 +104,7 @@ if __name__ == "__main__":
                                 newfile[i, j, 1:] = cur_pts[i, ind]
                     np.save(
                         root_to_save
-                        + "contact_points/"
+                        + "new_contact_points/"
                         + "pairs_with_contact_points_%s_level" % id
                         + str(level)
                         + ".npy",

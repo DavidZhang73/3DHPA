@@ -12,7 +12,7 @@ from .SAmodule import selfAttention
 
 class Predictor(nn.Module):
     def __init__(self, feat_dim, mode="relative"):
-        super(Predictor, self).__init__()
+        super().__init__()
         self.mode = mode
 
         self.mlp = nn.Linear(feat_dim, 1024)
@@ -37,7 +37,7 @@ class Predictor(nn.Module):
 
 class FinalPoseHead(nn.Module):
     def __init__(self, feat_dim):
-        super(FinalPoseHead, self).__init__()
+        super().__init__()
 
         self.mlp = nn.Linear(feat_dim, 128)
 
@@ -262,11 +262,11 @@ class TransformerEncoder(nn.Module):
                 feat = output.clone()
 
             if idx == 0:
-                record_out0 = feat.clone()
+                feat.clone()
             elif idx == 1:
-                record_out1 = feat.clone()
+                feat.clone()
             elif idx == 2:
-                record_out2 = feat.clone()
+                feat.clone()
 
             if self.args.base_cat:
                 feat = torch.cat((feat, src), dim=-1)

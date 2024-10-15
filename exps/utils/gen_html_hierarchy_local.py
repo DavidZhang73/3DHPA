@@ -55,24 +55,24 @@ def func(
             input_title_list_other += ":" + input_title_list_hierachy[i]
 
     if not os.path.exists(input_main_folder):
-        print("Error: input main folder %s does not exist!" % input_main_folder)
+        print(f"Error: input main folder {input_main_folder} does not exist!")
         exit(1)
 
     if first_hierachy:
         if os.path.exists(output_folder):
-            print("Error: output folder %s exists!" % output_folder)
+            print(f"Error: output folder {output_folder} exists!")
             exit(1)
 
         os.mkdir(output_folder)
 
     if num_hierachy > 1:
         if not os.path.exists(os.path.join(input_main_folder, "child")):
-            print("Error: input sub-folder %s does not exist!" % os.path.join(input_main_folder, "child"))
+            print("Error: input sub-folder {} does not exist!".format(os.path.join(input_main_folder, "child")))
             exit(1)
 
     for i in range(len(input_folder_list)):
         if input_folder_list[i] != "" and not os.path.exists(os.path.join(input_main_folder, input_folder_list[i])):
-            print("Error: input sub-folder %s does not exist!" % os.path.join(input_main_folder, input_folder_list[i]))
+            print(f"Error: input sub-folder {os.path.join(input_main_folder, input_folder_list[i])} does not exist!")
             exit(1)
 
     # write the file header and footer
@@ -134,7 +134,7 @@ def func(
                 ave_txt = ""
                 for line in lines[:num_log_to_show]:
                     ave_txt += "<p>" + line + "</p>"
-                ave_txt += '<p><a href="%s">See More</a></p>' % os.path.join("..", "log.txt")
+                ave_txt += '<p><a href="{}">See More</a></p>'.format(os.path.join("..", "log.txt"))
                 fout.write("<b>Average Statistics:</b> " + ave_txt)
 
             page_id = k // num_per_page
@@ -180,12 +180,11 @@ def func(
                 txt = ""
                 for line in ftxt.readlines():
                     txt += "<p>" + line.rstrip() + "</p>"
-                txt += '<p><a href="%s">See More</a></p>' % os.path.join("..", input_folder, str(f) + ".txt")
+                txt += '<p><a href="{}">See More</a></p>'.format(os.path.join("..", input_folder, str(f) + ".txt"))
                 data[counter] = ("text", txt)
             else:
                 print(
-                    "Warning: there is no .jpg/.png/.txt file whose name starts with %s!"
-                    % os.path.join(input_main_folder, input_folder, str(f))
+                    f"Warning: there is no .jpg/.png/.txt file whose name starts with {os.path.join(input_main_folder, input_folder, str(f))}!"
                 )
                 data[counter] = ("none", "")
 

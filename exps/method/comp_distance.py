@@ -43,7 +43,7 @@ def main():
     # =================== Parameters Setting ===================
     args = parser.parse_args()
 
-    train_dataset = PartNetPartDataset(
+    PartNetPartDataset(
         args.data_dir,
         args.train_data_fn,
         args.category,
@@ -70,8 +70,8 @@ def main():
         num_ins += 1
 
         num_valid = int(data[0].sum().item())
-        part_pcs = data[2].squeeze(0)[:num_valid]
-        candidates = [_ for _ in range(num_valid)]
+        data[2].squeeze(0)[:num_valid]
+        [_ for _ in range(num_valid)]
 
         part_id = data[1].squeeze().numpy().tolist()
         num_part_per_ins = Counter(part_id).most_common()

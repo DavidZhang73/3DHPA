@@ -69,11 +69,11 @@ class PartNetPartDataset(data.Dataset):
     def __getitem__(self, index):
         shape_id = self.data[index]
 
-        cur_data_fn = os.path.join(self.data_dir, "shape_data/%s_level" % shape_id + self.level + ".npy")
+        cur_data_fn = os.path.join(self.data_dir, f"shape_data/{shape_id}_level" + self.level + ".npy")
         cur_data = np.load(cur_data_fn, allow_pickle=True).item()  # assume data is stored in separate .npz file.
         cur_contact_data_fn = os.path.join(
             self.data_dir,
-            "contact_points/pairs_with_contact_points_%s_level" % shape_id + self.level + ".npy",
+            f"contact_points/pairs_with_contact_points_{shape_id}_level" + self.level + ".npy",
         )
         cur_contacts = np.load(cur_contact_data_fn, allow_pickle=True)  # P x P x 4
 
@@ -179,19 +179,24 @@ class PartNetPartDataset(data.Dataset):
                 data_feats = data_feats + (out,)
 
             else:
-                raise ValueError("ERROR: unknown feat type %s!" % feat)
+                raise ValueError(f"ERROR: unknown feat type {feat}!")
 
         return data_feats
 
 
 if __name__ == "__main__":
     dataset = PartNetPartDataset(
-        data_dir="/data/pkudba/datasets/partnet/prepare_data",
-        data_fn="Chair.train.npy",
+        data_dir="prep_data",
+        data_fn="Chair.test.npy",
         category="Chair",
         data_features=DATA_FEATURES,
         level="3",
-        max_num_part=100,
+        max_num_part=20,
     )
+    count = 0
+    count_all = 0
     for data in dataset:
-        aa = 1
+        if data is not None:
+            count += 1
+        count_all += 1
+    print(f"count: {count}, count_all: {count_all}")

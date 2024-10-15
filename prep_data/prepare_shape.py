@@ -1,3 +1,14 @@
+"""
+prepare shape data
+include:
+    point clouds: P x N x 3
+    part ids: P         # the class index in partnet dataset
+    geo part ids: P     # the class index according to the geo information
+    part poses: P x 7   # T and R
+        T: center of a part
+        R: quaternion
+"""
+
 import json
 
 import numpy as np
@@ -5,6 +16,14 @@ import trimesh
 from pyquaternion import Quaternion
 from scipy.spatial.distance import cdist
 from sklearn.decomposition import PCA
+
+"""
+    input:
+        size P x 3
+        gt_pcs P x 1000 x 3
+    output:
+        sym_stick P
+"""
 
 
 def get_pc_center(pc):
@@ -65,7 +84,7 @@ def get_sym_stick(sizes, gt_pcs):
 
 def get_shape_info(index, lev):
     # get children
-    fn = "../data/partnet_dataset/" + str(index) + "/result_after_merging.json"
+    fn = "/data/pkudba/part_assembly/part_assembly/data/partnet_dataset/" + str(index) + "/result_after_merging.json"
     root_to_load_file = []
     with open(fn) as f:
         root_to_load_file = json.load(f)[0]
@@ -222,14 +241,7 @@ def export_ply(out, v):
             # ipdb.set_trace()
             fout.write(
                 "%f %f %f %d %d %d\n"
-                % (
-                    v[i, 0],
-                    v[i, 1],
-                    v[i, 2],
-                    int(cur_color[0] * 255),
-                    int(cur_color[1] * 255),
-                    int(cur_color[2] * 255),
-                )
+                % (v[i, 0], v[i, 1], v[i, 2], int(cur_color[0] * 255), int(cur_color[1] * 255), int(cur_color[2] * 255))
             )
 
 
@@ -268,12 +280,15 @@ def get_geo_part_ids(part_sizes, part_ids):
 
 
 if __name__ == "__main__":
-    root_to_load_file = "../data/partnet_dataset/"
-    root_to_save_file = "../prepare_partnet/shape_data/"
+    root_to_load_file = "/data/pkudba/part_assembly/part_assembly/data/partnet_dataset/"
+    # root_to_save_file = "../prepare_data/shape_data/"
+
+    root_to_save_file = "../prepare_data/new_shape_data/"
     # root_to_save_flle = "./prepared_data"
-    cat_name = "Lamp"
-    cat_name = "Cabinet"
-    cat_name = "Table"
+    # cat_name = 'Lamp'
+    # cat_name = "Cabinet"
+    # cat_name = "Table"
+    cat_name = "StorageFurniture"
     modes = ["train", "val", "test"]
     levels = [3, 1, 2]
 
@@ -298,24 +313,13 @@ if __name__ == "__main__":
         for mode in modes:
             # get the object list to deal with
             object_json = json.load(
-                open(root_to_load_file + "/train_val_test_split/" + cat_name + "." + mode + ".json")
+                open(root_to_load_file + "stats/train_val_test_split/" + cat_name + "." + mode + ".json")
             )
             object_list = [int(object_json[i]["anno_id"]) for i in range(len(object_json))]
 
             # for each object:
             for i, fn in enumerate(object_list):
-                print(
-                    "level ",
-                    level,
-                    " mode ",
-                    mode,
-                    " ",
-                    fn,
-                    " is start to convert!",
-                    i,
-                    "/",
-                    len(object_list),
-                )
+                print("level ", level, " mode ", mode, " ", fn, " is start to convert!", i, "/", len(object_list))
 
                 # get information in obj file
                 parts_pcs, Rs, ts, parts_names, sizes = get_shape_info(fn, lev)
@@ -344,7 +348,4 @@ if __name__ == "__main__":
                     "geo_part_ids": geo_part_ids,
                     "sym": sym,
                 }
-                np.save(
-                    root_to_save_file + str(fn) + "_level" + str(level) + ".npy",
-                    dic_to_save,
-                )
+                np.save(root_to_save_file + str(fn) + "_level" + str(level) + ".npy", dic_to_save)

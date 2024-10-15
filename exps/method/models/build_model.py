@@ -74,7 +74,7 @@ class HPA(nn.Module):
         gt_part_poses = gt_part_poses.permute(1, 0, 2)
         lens = mask.sum(1)
         mask = ~mask.bool()  # B x P
-        tgt = torch.zeros_like(src)
+        torch.zeros_like(src)
 
         num_part, batch_size, _ = src.size()
 
@@ -264,7 +264,7 @@ class EnDe(nn.Module):
         gt_part_poses = gt_part_poses.permute(1, 0, 2)
         lens = mask.sum(1)
         mask = ~mask.bool()  # B x P
-        tgt = torch.zeros_like(src)
+        torch.zeros_like(src)
 
         num_part, batch_size, _ = src.size()
 
